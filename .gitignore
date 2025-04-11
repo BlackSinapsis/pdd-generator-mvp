@@ -1,0 +1,13 @@
+# Entorno virtual
+env/
+# Archivos compilados de Python
+__pycache__/
+*.pyc
+# Archivos de video (suelen ser grandes)
+*.mp4
+*.mov
+*.avi
+# Carpeta de screenshots generados
+screenshots_output/
+# Archivos de entorno (si usaras API keys más adelante)
+.env
