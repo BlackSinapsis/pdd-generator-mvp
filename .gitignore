@@ -1,13 +1,29 @@
-# Entorno virtual
+# Entorno virtual Python
 env/
-# Archivos compilados de Python
+venv/
+*.venv
+
+# Archivos compilados y caches de Python
 __pycache__/
-*.pyc
-# Archivos de video (suelen ser grandes)
+*.py[cod]
+*$py.class
+
+# Archivos de video (suelen ser grandes y no se versionan)
 *.mp4
 *.mov
 *.avi
-# Carpeta de screenshots generados
+*.mkv
+*.wmv
+
+# Archivos de salida generados (opcional, pero bueno para evitar commits accidentales)
 screenshots_output/
-# Archivos de entorno (si usaras API keys más adelante)
-.env
+# pdd_output.md
+pasos_ia_api_output.json
+# pasos_ia_ejemplo.json  <-- Puedes decidir si versionar el ejemplo o no
+
+# Archivos de configuración local (si usaras .env en el futuro)
+.env*
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
