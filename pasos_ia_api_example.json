@@ -1,0 +1,102 @@
+[
+  {
+    "step_number": 1,
+    "description": "Minimizar la ventana de OBS Studio.",
+    "timestamp_ms": 3001
+  },
+  {
+    "step_number": 2,
+    "description": "Abrir el navegador web Microsoft Edge.",
+    "timestamp_ms": 7942
+  },
+  {
+    "step_number": 3,
+    "description": "Escribir 'banco central cotizaciones' en la barra de direcciones/búsqueda.",
+    "timestamp_ms": 10818
+  },
+  {
+    "step_number": 4,
+    "description": "Navegar a la URL de resultados de búsqueda de Google 'https://www.google.com/search?q=banco+central+cotizaciones&sca_esv=...' (URL parcialmente visible).",
+    "timestamp_ms": 11351
+  },
+  {
+    "step_number": 5,
+    "description": "Hacer clic en el enlace del resultado de búsqueda 'Planilla de Cierre de Cotizaciones'.",
+    "timestamp_ms": 13338
+  },
+  {
+    "step_number": 6,
+    "description": "Navegar a la URL 'https://www.bcra.gob.ar/PublicacionesEstadisticas/Planilla_cierre_de_cotizaciones.asp?moneda=2' visible en la barra de direcciones.",
+    "timestamp_ms": 14004
+  },
+  {
+    "step_number": 7,
+    "description": "Hacer clic en el icono de enlace de Excel (XLS) ubicado sobre la tabla 'Planilla de Cierre'.",
+    "timestamp_ms": 18708
+  },
+  {
+    "step_number": 8,
+    "description": "En el diálogo 'Guardar como', hacer clic en el botón 'Guardar' aceptando el nombre de archivo 'Cotcotiza.xlsx'.",
+    "timestamp_ms": 20775
+  },
+  {
+    "step_number": 9,
+    "description": "Hacer clic en el icono de Descargas en la barra de herramientas del navegador.",
+    "timestamp_ms": 24168
+  },
+  {
+    "step_number": 10,
+    "description": "Hacer clic en el archivo descargado 'Cotcotiza.xlsx' en la lista de descargas recientes.",
+    "timestamp_ms": 25918
+  },
+  {
+    "step_number": 11,
+    "description": "En Microsoft Excel, hacer clic en el botón 'Cerrar' (X) de la ventana emergente de error titulada 'Microsoft Excel'.",
+    "timestamp_ms": 31558
+  },
+  {
+    "step_number": 12,
+    "description": "Hacer clic en el botón 'Cerrar' (X) de la ventana principal de Microsoft Excel.",
+    "timestamp_ms": 33158
+  },
+  {
+    "step_number": 13,
+    "description": "Volver al navegador y seleccionar el rango de celdas en la tabla HTML, desde la celda con '10-04-2025' hasta la celda con '1.103,726'.",
+    "timestamp_ms": 39088
+  },
+  {
+    "step_number": 14,
+    "description": "Copiar la selección (usando el atajo de teclado Ctrl+C).",
+    "timestamp_ms": 40368
+  },
+  {
+    "step_number": 15,
+    "description": "Abrir Microsoft Excel.",
+    "timestamp_ms": 41288
+  },
+  {
+    "step_number": 16,
+    "description": "Hacer clic en la plantilla 'Blank workbook'.",
+    "timestamp_ms": 42238
+  },
+  {
+    "step_number": 17,
+    "description": "Hacer clic en la celda 'B2'.",
+    "timestamp_ms": 43608
+  },
+  {
+    "step_number": 18,
+    "description": "Pegar los datos copiados (usando el atajo de teclado Ctrl+V) comenzando en la celda 'B2'.",
+    "timestamp_ms": 44368
+  },
+  {
+    "step_number": 19,
+    "description": "Cambiar a la ventana de OBS Studio.",
+    "timestamp_ms": 49758
+  },
+  {
+    "step_number": 20,
+    "description": "Hacer clic en el botón 'Detener Grabación' en la sección 'Controles' de OBS Studio.",
+    "timestamp_ms": 50408
+  }
+]
