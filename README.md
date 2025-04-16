@@ -13,13 +13,13 @@ El objetivo principal es agilizar la documentación de procedimientos operativos
 
 Esta versión demuestra exitosamente el flujo de trabajo central de principio a fin:
 
-*   **Análisis de Video:** Procesa un archivo de video local (formato `.mp4`).
-*   **Extracción de Pasos con IA:** Utiliza la API de Vertex AI (modelo Gemini configurable,en este caso, Gemini 2.5 Pro) a través de un script Python (`analizar_video.py`) para:
+*   **Análisis de Video:** Procesa un archivo de video local (ej: `.mkv`).
+*   **Extracción de Pasos con IA:** Utiliza la API de Vertex AI (modelo Gemini configurable, ej., Gemini 1.5 Pro) a través de un script Python (`video_analyzer.py`) para:
     *   Identificar pasos significativos de interacción del usuario dentro del video.
     *   Generar una descripción concisa para cada paso.
-    *   Determinar una marca de tiempo precisa (en milisegundos) para el momento clave de cada paso.
-    *   Exporta estos datos estructurados como un archivo JSON (`pasos_ia_ejemplo.json`).
-*   **Extracción de Screenshots:** Procesa el JSON generado y el archivo de video original usando OpenCV a través de un script Python (`extraer_screenshots.py`) para:
+    *   Determinar una marca de tiempo precise (en milisegundos) para el momento clave de cada paso.
+    *   Exporta estos datos estructurados como archivos JSON (`pasos_ia_api_output.json` y `pasos_ia_api_example.json`).
+*   **Extracción de Screenshots:** Procesa el JSON generado (`pasos_ia_api_example.json`) y el archivo de video original usando OpenCV a través de un script Python (`extraer_screenshots.py`) para:
     *   Calcular el fotograma objetivo para cada marca de tiempo basado en los FPS del video.
     *   Extraer el fotograma de video correspondiente.
     *   Guardar cada fotograma como una imagen PNG (`screenshot_paso_X.png`) en una carpeta de salida dedicada (`screenshots_output/`).
@@ -50,6 +50,7 @@ Los objetivos clave incluyen:
 4.  **Salida de Archivo BPMN XML:** Guardar la cadena de texto del BPMN XML generada por IA en un archivo `.bpmn` separado, destinado a ser importado y refinado en herramientas de modelado BPMN dedicadas (ej., bpmn.io, draw.io).
 5.  **Integración Refinada:** Actualizar `main.py` para orquestar este nuevo pipeline más complejo, incluyendo el manejo de metadatos proporcionados por el usuario (Nombre de Proyecto, Autor, etc.).
 
+**Advertencia:** Los objetivos de v0.2, particularmente la generación de texto narrativo y código BPMN únicamente a partir de video, son altamente experimentales y desafían los límites actuales de las capacidades de IA. Los resultados pueden ser imperfectos y requerirán una revisión y refinamiento manual significativos.
 
 ## Prerrequisitos (v0.1)
 
@@ -80,10 +81,11 @@ Los objetivos clave incluyen:
 
 ## Configuración (v0.1)
 
-1.  **Editar `analizar_video.py`:**
+1.  **Editar `video_analyzer.py`:**
     *   Modifica las variables `PROJECT_ID`, `LOCATION`, y `MODEL_NAME` con los datos de tu proyecto de Google Cloud y el modelo Gemini que deseas usar.
-    *   Ajusta `VIDEO_PATH` para que apunte a tu archivo de video de entrada.
-2.  **Verificar Rutas en Otros Scripts:** Asegúrate de que las rutas de entrada/salida (`JSON_INPUT_PATH`, `VIDEO_PATH`, `OUTPUT_DIR`, `OUTPUT_MD_PATH`) sean consistentes entre los scripts (`extraer_screenshots.py`, `generar_pdd.py`, `main.py`).
+    *   Ajusta `VIDEO_PATH` para que apunte a tu archivo de video de entrada (ej: `video_1.mkv`).
+    *   Verifica los nombres de los archivos JSON de salida (`OUTPUT_JSON_PATH`, `EXAMPLE_JSON_PATH`).
+2.  **Verificar Rutas y Nombres en Otros Scripts:** Asegúrate de que las rutas y nombres de archivo (`JSON_INPUT_PATH` apuntando a `pasos_ia_api_example.json`, `VIDEO_PATH`, `OUTPUT_DIR`, `OUTPUT_MD_PATH`) sean consistentes y correctos en los scripts `extraer_screenshots.py`, `generar_pdd.py` y `main.py`.
 
 ## Uso (v0.1)
 
@@ -91,7 +93,11 @@ Los objetivos clave incluyen:
 2.  Activa tu entorno virtual.
 3.  Ejecuta el script principal desde la carpeta raíz del proyecto, pasando la ruta a tu archivo de video como argumento:
     ```bash
-    python main.py ruta/al/video_de_entrada.mp4
+    python main.py ruta/a/tu/video_1.mkv
+    ```
+    *Ejemplo si el video está en la misma carpeta:*
+    ```bash
+    python main.py video_1.mkv
     ```
 4.  El script ejecutará todas las fases (Análisis IA, Extracción Screenshots, Generación Markdown).
 5.  El documento básico resultante se generará como `pdd_output.md`.
