@@ -1,70 +1,83 @@
-# PDD Generator - Generador Automático de Documentos de Descripción de Procesos
+# MVP PDD Generator - Generador Automático de Documentos de Procedimiento
 
-**Versión:** 0.1 (MVP)
-**Repositorio:** [https://github.com/BlackSinapsis/pdd-generator](https://github.com/BlackSinapsis/pdd-generator)
+Este proyecto explora la generación automática de Documentos de Descripción de Procesos (PDD) utilizando IA multimodal (Vertex AI Gemini) y Python. Se ha desarrollado en dos fases de Producto Mínimo Viable (MVP).
+
+**Repositorio:** [https://github.com/BlackSinapsis/pdd-generator](https://github.com/BlackSinapsis/pdd-generator) 
 
 ## Descripción General
 
-Este proyecto tiene como objetivo automatizar la generación de Documentos de Descripción de Procesos (PDD) mediante el uso de IA multimodal para analizar grabaciones de pantalla de procesos realizados por usuarios. Esta versión inicial (v0.1) funciona como un Producto Mínimo Viable (MVP) para validar la factibilidad técnica central del enfoque.
+El objetivo es analizar una grabación de video de un proceso realizado en una computadora y generar automáticamente un borrador de PDD que incluya los pasos detallados, descripciones, screenshots correspondientes y otros elementos estructurales.
 
-El objetivo principal es agilizar la documentación de procedimientos operativos estándar, reduciendo el esfuerzo manual y mejorando la consistencia.
+## Estado Actual: MVP v0.2 Completado
 
-## Logros (v0.1 - MVP)
+La versión actual (v0.2) representa un avance significativo sobre el MVP inicial, intentando generar un PDD más completo y estructurado en formato DOCX, incluyendo un intento experimental de generar código BPMN.
 
-Esta versión demuestra exitosamente el flujo de trabajo central de principio a fin:
+---
 
-*   **Análisis de Video:** Procesa un archivo de video local (ej: `.mkv`).
-*   **Extracción de Pasos con IA:** Utiliza la API de Vertex AI (modelo Gemini configurable, ej., Gemini 1.5 Pro) a través de un script Python (`video_analyzer.py`) para:
-    *   Identificar pasos significativos de interacción del usuario dentro del video.
-    *   Generar una descripción concisa para cada paso.
-    *   Determinar una marca de tiempo precise (en milisegundos) para el momento clave de cada paso.
-    *   Exporta estos datos estructurados como archivos JSON (`pasos_ia_api_output.json` y `pasos_ia_api_example.json`).
-*   **Extracción de Screenshots:** Procesa el JSON generado (`pasos_ia_api_example.json`) y el archivo de video original usando OpenCV a través de un script Python (`extraer_screenshots.py`) para:
-    *   Calcular el fotograma objetivo para cada marca de tiempo basado en los FPS del video.
-    *   Extraer el fotograma de video correspondiente.
-    *   Guardar cada fotograma como una imagen PNG (`screenshot_paso_X.png`) en una carpeta de salida dedicada (`screenshots_output/`).
-*   **Generación de Documento Básico:** Ensambla la información extraída usando un script Python (`generar_pdd.py`) para:
-    *   Crear un documento simple en formato Markdown (`pdd_output.md`).
-    *   Listar cada paso secuencialmente con su descripción generada por IA.
-    *   Incluir un enlace de referencia a la imagen del screenshot correspondiente.
-*   **Pipeline Integrado:** Proporciona un script de ejecución principal (`main.py`) que orquesta las tres fases (Análisis, Extracción de Screenshots, Generación de Documento) mediante una única invocación por línea de comandos.
-*   **Fundación:** Establece un entorno Python base, gestión de dependencias (`requirements.txt`), control de versiones (Git) y manejo básico de errores.
+## Historial de Versiones del MVP
 
-## Objetivos para v0.2 (Generación Experimental Completa de PDD)
+### MVP v0.1: Flujo Básico (Video -> Pasos/Screenshots -> Markdown)
 
-La próxima iteración (v0.2) busca expandir significativamente las capacidades de automatización con un objetivo más ambicioso y experimental: **intentar generar una estructura de PDD más completa directamente mediante el análisis de IA.**
+*   **Objetivo:** Validar la viabilidad técnica de extraer pasos con timestamps y screenshots de un video usando IA y OpenCV.
+*   **Funcionalidades:**
+    *   Análisis de video local (`.mp4/.mkv`) vía API de Vertex AI (Gemini Pro).
+    *   Extracción de lista de pasos con descripción (resumida) y timestamp_ms en formato JSON.
+    *   Extracción de screenshots PNG basados en los timestamps.
+    *   Generación de un archivo **Markdown (`.md`)** simple listando el número de paso, la descripción y un enlace al screenshot.
+*   **Logros Clave:** Se validó el flujo central y la capacidad de la IA para identificar pasos y extraer fotogramas programáticamente.
+*   **Limitaciones Principales:** Salida en formato básico (Markdown), descripciones de IA a veces genéricas, precisión de timestamps variable, sin estructura de PDD formal.
 
-Los objetivos clave incluyen:
+### MVP v0.2: Intento de PDD Completo (Video -> JSON Detallado -> DOCX + BPMN XML)
 
-1.  **Análisis IA Mejorado (Mega-Prompt):** Diseñar e implementar un prompt complejo para la IA multimodal con el fin de intentar generar:
-    *   Secciones narrativas (Introducción, Contexto de Negocio, Resumen del Proceso) basadas en el contexto inferido del video.
-    *   Información más detallada de los pasos (infiriendo el tipo de acción principal y la aplicación en foco).
-    *   Excepciones potencialmente relevantes basadas en el flujo observado.
-    *   **Código BPMN 2.0 XML:** Instruir a la IA para generar código BPMN 2.0 XML que represente el flujo de proceso inferido.
-2.  **Salida JSON Compleja:** Manejar una estructura JSON más compleja y anidada devuelta por la IA, conteniendo todos los elementos generados.
-3.  **Generación de Documento DOCX:**
-    *   Cambiar el formato de salida de Markdown (`.md`) a Microsoft Word (`.docx`) usando `python-docx`.
-    *   Crear una estructura de documento que refleje una plantilla PDD estándar.
-    *   Poblar secciones narrativas con texto generado por IA (claramente marcado como necesitando revisión).
-    *   Implementar una tabla detallada de pasos de proceso incluyendo ID de Paso, Descripción, Aplicación (de IA), Acción (de IA), placeholders para Rol/Responsable, e **imágenes de screenshot incrustadas**.
-4.  **Salida de Archivo BPMN XML:** Guardar la cadena de texto del BPMN XML generada por IA en un archivo `.bpmn` separado, destinado a ser importado y refinado en herramientas de modelado BPMN dedicadas (ej., bpmn.io, draw.io).
-5.  **Integración Refinada:** Actualizar `main.py` para orquestar este nuevo pipeline más complejo, incluyendo el manejo de metadatos proporcionados por el usuario (Nombre de Proyecto, Autor, etc.).
+*   **Objetivo:** Explorar los límites de la IA para generar una estructura de PDD más completa (basada en plantilla de ejemplo), incluyendo texto narrativo, tabla detallada con imágenes incrustadas, y código BPMN, con salida en formato `.docx`. **(Enfoque Experimental)**.
+*   **Funcionalidades:**
+    *   Se utilizó un **"Mega-Prompt"** para solicitar a un modelo avanzado (Gemini 1.5 Pro o similar) la generación de una estructura JSON compleja.
+    *   **Extracción de Datos Mejorada (vía IA):**
+        *   Sugerencias para metadata (Nombre Proceso, Acrónimo).
+        *   Texto narrativo generado por IA para secciones: Introducción, Contexto de Negocio, Resumen del Proceso.
+        *   Lista de Roles de Usuario inferidos por aplicación.
+        *   Pasos Detallados con: Step ID, Aplicación en Foco, **Acción (resumen)**, **Descripción Detallada (texto largo de UI)**, Timestamp.
+        *   Sugerencias de Excepciones potenciales.
+        *   **Código XML BPMN 2.0** básico generado por IA (estructura lineal simple con `bpmndi` placeholders).
+    *   **Salida en Formato DOCX:**
+        *   Generación de un archivo `.docx` (`PDD_Generated_Output.docx`) usando `python-docx`.
+        *   Inclusión de secciones narrativas generadas por IA (con advertencia para revisión).
+        *   **Tabla de Pasos Detallados** estructurada con las columnas mencionadas.
+        *   **Screenshots incrustados** directamente en la tabla, con tamaño ajustado para mantener proporción.
+        *   Placeholder e instrucciones para insertar manualmente el diagrama BPMN.
+        *   Placeholders para otras secciones (TOC, Glosario, Historial).
+    *   **Salida BPMN XML:**
+        *   El código BPMN 2.0 generado por IA se guarda en un archivo `.bpmn` separado (`Generated_Process.bpmn`).
+        *   Este archivo puede ser importado en herramientas como `bpmn.io` o `draw.io` para visualización y **edición manual significativa**.
+*   **Logros Clave:**
+    *   Generación exitosa de un documento `.docx` estructurado.
+    *   Incrustación funcional de screenshots en la tabla.
+    *   Extracción más detallada de información de pasos por la IA (descripción corta vs. larga, aplicación).
+    *   Generación de texto narrativo y sugerencias de excepciones por IA (calidad variable).
+    *   Generación de un archivo BPMN XML básico *importable* (aunque requiere edición manual).
+    *   Flujo de trabajo completo automatizado desde `main.py`.
+*   **Limitaciones Persistentes y de v0.2:**
+    *   La calidad del texto narrativo, excepciones y BPMN generado por IA es **altamente dependiente del prompt y experimental**, requiriendo revisión y edición humana significativa.
+    *   La generación automática de BPMN **no infiere lógica compleja** (decisiones, paralelismos) y puede fallar si el prompt no es preciso o el modelo tiene dificultades.
+    *   La precisión de timestamps sigue dependiendo de la IA.
+    *   No hay UI.
+    *   Faltan secciones completas del PDD estándar (Roles y Resp detallados, manejo específico de excepciones del proceso real, etc.).
 
-**Advertencia:** Los objetivos de v0.2, particularmente la generación de texto narrativo y código BPMN únicamente a partir de video, son altamente experimentales y desafían los límites actuales de las capacidades de IA. Los resultados pueden ser imperfectos y requerirán una revisión y refinamiento manual significativos.
+---
 
-## Prerrequisitos (v0.1)
+## Prerrequisitos
 
 *   Python 3.8+ instalado.
-*   Cuenta de Google Cloud con un proyecto activo y la API de Vertex AI habilitada.
+*   Cuenta de Google Cloud con un proyecto activo y Vertex AI API habilitada.
 *   `gcloud` CLI (Google Cloud SDK) instalado y configurado.
 *   Autenticación realizada mediante `gcloud auth application-default login`.
 
-## Instalación (v0.1)
+## Instalación
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone https://github.com/BlackSinapsis/pdd-generator.git
-    cd pdd-generator
+    git clone https://github.com/BlackSinapsis/pdd-generator.git 
+    cd pdd-generator 
     ```
 2.  **Crear y activar un entorno virtual (recomendado):**
     ```bash
@@ -77,38 +90,42 @@ Los objetivos clave incluyen:
     ```bash
     pip install -r requirements.txt
     ```
-    *(Nota: v0.2 requerirá dependencias adicionales como `python-docx`)*
 
-## Configuración (v0.1)
+## Configuración
 
-1.  **Editar `video_analyzer.py`:**
-    *   Modifica las variables `PROJECT_ID`, `LOCATION`, y `MODEL_NAME` con los datos de tu proyecto de Google Cloud y el modelo Gemini que deseas usar.
-    *   Ajusta `VIDEO_PATH` para que apunte a tu archivo de video de entrada (ej: `video_1.mkv`).
-    *   Verifica los nombres de los archivos JSON de salida (`OUTPUT_JSON_PATH`, `EXAMPLE_JSON_PATH`).
-2.  **Verificar Rutas y Nombres en Otros Scripts:** Asegúrate de que las rutas y nombres de archivo (`JSON_INPUT_PATH` apuntando a `pasos_ia_api_example.json`, `VIDEO_PATH`, `OUTPUT_DIR`, `OUTPUT_MD_PATH`) sean consistentes y correctos en los scripts `extraer_screenshots.py`, `generar_pdd.py` y `main.py`.
+1.  **Editar `main.py`:**
+    *   Modifica el diccionario `USER_METADATA` con la información de tu proyecto (nombre, acrónimo, autor, etc.).
+    *   Verifica y ajusta `PROJECT_ID`, `LOCATION`, y `MODEL_NAME` para tu configuración de Google Cloud y el modelo Gemini deseado (se recomienda Gemini 1.5 Pro).
+    *   (Opcional) Cambia los nombres de los archivos de salida (`COMPLEX_JSON_OUTPUT_PATH`, `SCREENSHOT_DIR`, `OUTPUT_DOCX_PATH`, `OUTPUT_BPMN_PATH`) si lo deseas, pero asegúrate de que sean consistentes con los scripts que los usan.
+2.  **Editar `video_analyzer.py` (Avanzado):**
+    *   Puedes experimentar modificando la variable `prompt` para ajustar el nivel de detalle, el formato de salida JSON, o las instrucciones para la generación de BPMN/texto narrativo. Requiere conocimiento de prompting y de la estructura JSON esperada por las otras fases.
+    *   Asegúrate de que `VIDEO_PATH` en la configuración de este script apunte a tu video si lo ejecutas standalone (aunque `main.py` lo sobrescribirá).
 
-## Uso (v0.1)
+## Uso
 
-1.  Asegúrate de haber completado los pasos de **Instalación** y **Configuración**.
-2.  Activa tu entorno virtual.
-3.  Ejecuta el script principal desde la carpeta raíz del proyecto, pasando la ruta a tu archivo de video como argumento:
+1.  Asegúrate de haber completado la **Instalación** y **Configuración**.
+2.  Activa tu entorno virtual (ver sección Instalación).
+3.  Ejecuta el script principal desde la carpeta raíz, pasando la ruta a tu video:
     ```bash
-    python main.py ruta/a/tu/video_1.mkv
+    python main.py ruta/al/video_de_entrada.mkv
     ```
-    *Ejemplo si el video está en la misma carpeta:*
+    *Ejemplo:*
     ```bash
     python main.py video_1.mkv
     ```
-4.  El script ejecutará todas las fases (Análisis IA, Extracción Screenshots, Generación Markdown).
-5.  El documento básico resultante se generará como `pdd_output.md`.
+4.  El script ejecutará el pipeline:
+    *   Análisis IA -> `full_analysis_output.json` (puede tardar y generar costos)
+    *   Extracción Screenshots -> Carpeta `screenshots_output/`
+    *   Ensamblaje DOCX y BPMN -> `PDD_Generated_Output.docx` y `Generated_Process.bpmn`
+5.  Revisa los archivos generados:
+    *   Abre `PDD_Generated_Output.docx` para ver el borrador del documento.
+    *   Importa `Generated_Process.bpmn` en una herramienta como `bpmn.io` para visualizar y editar el diagrama de flujo.
 
-*(Instrucciones a ser actualizadas significativamente para v0.2)*
+## Próximos Pasos Posibles (Post-MVP v0.2)
 
-## Próximos Pasos (Post-v0.1 / Hacia v0.2 y más allá)
-
-*   Implementar los objetivos de v0.2 (Generación DOCX, BPMN experimental, etc.).
-*   Mejorar la precisión de los timestamps y la calidad de las descripciones.
-*   Añadir manejo de errores más robusto.
-*   Desarrollar una interfaz gráfica de usuario (UI).
-*   Implementar edición y refinamiento de los resultados generados.
-*   Añadir resaltado visual en screenshots.
+*   **Refinamiento de Contenido IA:** Mejorar prompts o usar LLMs específicos para pulir el texto narrativo, excepciones o incluso el BPMN.
+*   **Enfoque Híbrido:** Aceptar las limitaciones de la IA para ciertas secciones y mejorar la plantilla DOCX para facilitar el llenado manual (Intro, Contexto, Roles, etc.).
+*   **Interfaz Gráfica (UI):** Desarrollar una UI simple (ej: Streamlit) para subir el video, configurar parámetros y ver/descargar los resultados.
+*   **Edición Post-Generación:** Permitir editar los pasos/descripciones *después* de la generación IA, antes de crear el DOCX final.
+*   **Mejora de BPMN:** Investigar técnicas más avanzadas para inferir lógica (gateways) o permitir al usuario definirla.
+*   **Precisión de Timestamps/Screenshots:** Explorar post-procesamiento con OpenCV para detectar clics o cambios visuales más precisamente cerca del timestamp sugerido por la IA.
