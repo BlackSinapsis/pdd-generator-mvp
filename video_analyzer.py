@@ -113,63 +113,100 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
         return None
 
     # Define el prompt detallado
-    prompt = """{
+    prompt = """Eres un asistente experto en análisis de procesos de negocio y documentación técnica, especializado en crear Documentos de Descripción de Procesos (PDD) a partir de grabaciones de pantalla. Analiza exhaustivamente el siguiente video que muestra un proceso realizado en una computadora. Tu objetivo es extraer toda la información relevante y estructurarla en un único objeto JSON que sirva como base para un PDD completo.
+
+**Instrucciones Generales:**
+1.  Observa atentamente CADA acción visual y cambio significativo en pantalla.
+2.  Infiere el contexto y propósito basándote ÚNICAMENTE en lo visible y las acciones realizadas. Evita suposiciones externas.
+3.  Genera la salida **estrictamente** en el formato JSON especificado al final, sin ningún texto introductorio, comentarios, ni marcado como ```json ... ```. La respuesta DEBE ser solo el objeto JSON.
+
+**Estructura JSON de Salida Requerida:**
+La salida debe ser un objeto JSON con las siguientes claves principales:
+
+```json
+{
   "pdd_metadata_inferred": {
-    "process_name_suggestion": "string | null", // Sugiere un nombre corto si es obvio
-    "potential_acronym": "string | null"       // Sugiere un acrónimo si es obvio
+    "process_name_suggestion": "string | null",
+    "potential_acronym": "string | null"
   },
-  "introduction_text": "string",            // Texto generado para la sección 1.1 Purpose y 1.2 Scope
-  "business_context_text": "string",        // Texto generado para la sección 2.1 Business Purpose y 2.2 Business Scope
-  "user_roles_inferred": ["string"],        // Lista de roles inferidos (ej: "Usuario Excel", "Navegador Web")
-  "process_overview_text": "string",        // Texto generado para la sección 3.1 Overview
-  "detailed_steps": [                      // Lista de objetos, uno por cada paso detallado
+  "introduction_text": "string",
+  "business_context_text": "string",
+  "user_roles_inferred": ["string"],
+  "process_overview_text": "string",
+  "detailed_steps": [
     {
       "step_number": "integer",
-      "description": "string",            // Descripción ULTRA detallada (ver abajo)
-      "timestamp_ms": "integer",          // Momento clave de la acción
-      "application_in_focus": "string",   // Aplicación principal visible/activa
-      "action_type_inferred": "string"    // Tipo de acción inferida (ver lista abajo)
+      "description": "string",            // RESUMEN de la acción
+      "timestamp_ms": "integer",
+      "application_in_focus": "string",
+      "action_type_inferred": "string"    // Descripción ULTRA DETALLADA
     }
   ],
-  "potential_exceptions_suggestions": [   // Lista de sugerencias de excepciones comunes
+  "potential_exceptions_suggestions": [
     {
-      "exception_id": "string",          // Ej: "E1", "E2"
-      "description": "string",           // Descripción de la excepción inferida
-      "potential_trigger": "string",     // Causa posible inferida
-      "suggested_resolution": "string"   // Posible forma de manejarla
+      "exception_id": "string",
+      "description": "string",
+      "potential_trigger": "string",
+      "suggested_resolution": "string"
     }
   ],
-  "bpmn_xml_code": "string"                 // String conteniendo el CÓDIGO XML BPMN 2.0 completo
+  "bpmn_xml_code": "string" // String conteniendo el CÓDIGO XML BPMN 2.0 SIMPLE pero VÁLIDO
 }
 Use code with caution.
 Python
 Detalle de Secciones a Generar:
 pdd_metadata_inferred:
-process_name_suggestion: Infiere un nombre corto y descriptivo para el proceso si es evidente en el video (ej: "Descarga Cotizaciones BCRA", "Creación Orden SAP"). Si no es obvio, devuelve null.
-potential_acronym: Si el nombre del proceso o sistema sugiere un acrónimo, ponlo aquí. Si no, null.
-introduction_text: Genera 1-2 párrafos describiendo el propósito y alcance del proceso tal como se infiere del video. Enfócate en lo que hace el usuario. Ejemplo: "Este documento describe el proceso observado para obtener y formatear datos de cotizaciones desde el sitio web del Banco Central usando un navegador web y Microsoft Excel. Cubre la navegación, descarga, copia y pegado de datos."
-business_context_text: Genera 1-2 párrafos intentando inferir el propósito de negocio y el ámbito basado en las acciones y herramientas usadas. Sé conservador. Ejemplo: "El proceso parece tener como objetivo la recopilación de datos financieros para análisis o reporte. Involucra el uso de herramientas web estándar y software de hoja de cálculo, sugiriendo un contexto de análisis de datos o finanzas."
-user_roles_inferred: Lista los tipos de roles de usuario implícitos por las aplicaciones utilizadas (ej: "Usuario Navegador Web", "Usuario Microsoft Excel", "Usuario OBS Studio").
-process_overview_text: Genera un resumen de alto nivel (3-5 frases) de los pasos clave observados en secuencia. Ejemplo: "El proceso comienza buscando información en la web, luego descarga un archivo, lo abre, copia datos de la web, abre un nuevo archivo y pega los datos."
-detailed_steps: (¡La parte más crítica!) Genera una lista de objetos, uno por cada paso significativo.
-step_number: Secuencial (1, 2, 3...). 
-application_in_focus: El nombre de la aplicación principal que está activa o donde ocurre la acción (ej: "Google Chrome", "Microsoft Excel", "Explorador de Archivos", "OBS Studio", "Ventana 'Guardar Como'"). Si no es clara, usa "Desconocida".
-action_type_inferred: Descripción ULTRA detallada. Incluye el texto EXACTO de botones, menús, enlaces, URLs visibles, texto tecleado, nombres de archivo, y referencias de CELDAS (ej: 'B2', 'A1:C5'). Sé lo más específico posible.
-description: Un resumen de la descripcion ultra detallada.
+process_name_suggestion: Infiere un nombre corto (ej: "Descarga Cotizaciones BCRA"). Si no, null.
+potential_acronym: Infiere acrónimo. Si no, null.
+introduction_text: Genera 1-2 párrafos (propósito/alcance inferido del video). Ejemplo: "Este documento describe el proceso observado para obtener y formatear datos de cotizaciones del BCRA usando navegador y Excel..."
+business_context_text: Genera 1-2 párrafos (propósito de negocio inferido). Ejemplo: "El proceso parece orientado a la recopilación de datos financieros para análisis..."
+user_roles_inferred: Lista roles por aplicación (ej: "Usuario Navegador Web", "Usuario Microsoft Excel").
+process_overview_text: Resumen alto nivel (3-5 frases) de pasos clave observados.
+detailed_steps: Lista de objetos por paso:
+step_number: Secuencial (1, 2, 3...).
+description: Resumen corto de la acción (ej: "Abrir nueva instancia de Excel").
 timestamp_ms: Momento clave (entero).
-potential_exceptions_suggestions: Sugiere 2-3 excepciones comunes que podrían ocurrir en un proceso similar (basado en las apps/acciones vistas), no necesariamente vistas en el video. Formato: Lista de objetos con exception_id (E1, E2), description (ej: "Fallo al descargar archivo"), potential_trigger (ej: "Conexión de red inestable, URL incorrecta"), suggested_resolution (ej: "Verificar conexión, reintentar descarga, verificar URL").
-bpmn_xml_code: ¡Genera el código XML BPMN 2.0 completo!
-Analiza la secuencia de detailed_steps, application_in_focus y action_type_inferred.
-Crea un diagrama simple con:
-Un <bpmn:process id="GeneratedProcess_1">.
-Un pool/lane llamado "Usuario" (<bpmn:participant id="Participant_User" name="Usuario" processRef="GeneratedProcess_1"/> y dentro del process: <bpmn:laneSet><bpmn:lane id="Lane_User" name="Usuario"><bpmn:flowNodeRef>...</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>).
-Un <bpmn:startEvent id="StartEvent_1">.
-Una secuencia de <bpmn:userTask id="Task_{step_number}" name="{description_corta_o_aplicacion}"> para los pasos principales. Asegúrate que los IDs sean únicos. Asigna las tareas a la lane "Lane_User".
-Intenta insertar <bpmn:exclusiveGateway id="Gateway_{id_unico}"> si ves cambios claros de aplicación o acciones que sugieran una decisión (esto es difícil, sé conservador).
-Conecta todos los elementos con <bpmn:sequenceFlow id="Flow_{id_unico}" sourceRef="{id_origen}" targetRef="{id_destino}"/>. Asegúrate que los IDs sean únicos y las referencias correctas.
-Un <bpmn:endEvent id="EndEvent_1">.
-Asegúrate de que el XML sea válido y bien formado, comenzando con <?xml version="1.0" encoding="UTF-8"?> y las definiciones BPMN necesarias: <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://bpmn.io/schema/bpmn" exporter="IA Generated" exporterVersion="0.1"> ... </bpmn:definitions>. Incluye también la sección <bpmndi:BPMNDiagram> con un <bpmndi:BPMNPlane> aunque no generes coordenadas visuales (puedes dejarla simple, solo referenciando el process id: <bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1">).
-¡IMPORTANTE! La calidad de todas las secciones inferidas (texto, excepciones, BPMN) dependerá enormemente de tu capacidad para seguir estas instrucciones complejas y analizar el video. Prioriza la validez del formato JSON y la precisión de los detailed_steps. Si generar el BPMN XML completo es demasiado complejo, genera al menos la secuencia de tareas básicas (start -> task1 -> task2 -> ... -> end).
+application_in_focus: Aplicación principal (ej: "Microsoft Excel"). Si no clara, "Desconocida".
+action_type_inferred:**Descripción ULTRA DETALLADA, enfocada en la interacción precisa con la UI.**
+        *   Incluye el texto EXACTO de botones, menús, enlaces, URLs visibles, texto tecleado, nombres de archivo.
+        *   **¡ATENCIÓN ESPECIAL A HOJAS DE CÁLCULO (Excel, Sheets)!:**
+            *   Si se hace clic en una celda, se escribe en ella, o **se pegan datos**, identifica la **REFERENCIA EXACTA de la celda (ej: 'B2', 'C5', 'A1')** visible donde comienza la acción.
+            *   Si es posible inferir el **nombre de la columna** bajo la cual se pega o edita (basado en encabezados visibles), menciónalo (ej: "Pegar datos en celda 'B2' bajo la columna 'Fecha'").
+            *   Si se selecciona un rango, indica el rango (ej: "Seleccionar rango 'A1:C10'").
+        *   Sé lo más específico posible sobre el *lugar* de la interacción. Ejemplo detallado: "Pegar datos (Ctrl+V) en la hoja 'Sheet1', comenzando **específicamente en la celda 'B2'**."
+potential_exceptions_suggestions: Sugiere 2-3 excepciones comunes (objetos con id, desc, trigger, resolution).
+bpmn_xml_code: ¡Genera código XML BPMN 2.0 VÁLIDO y SIMPLIFICADO!
+Analiza la secuencia de detailed_steps.
+DEBE incluir el encabezado XML (<?xml...?>) y <bpmn:definitions ...> con namespaces y un targetNamespace.
+DEBE incluir un <bpmn:process id="GeneratedProcess_1">.
+NO INCLUIR: Collaboration, Participant, LaneSet, Lanes.
+DEBE incluir un <bpmn:startEvent id="StartEvent_1">.
+DEBE incluir una secuencia de <bpmn:userTask id="Task_{step_number}" name="{description}">. Usa el campo description (el resumen corto) del paso como name. Asegura IDs únicos (Task_1, Task_2, etc.).
+DEBE incluir un <bpmn:endEvent id="EndEvent_1">.
+DEBE incluir los <bpmn:sequenceFlow id="Flow_{id_unico}" sourceRef="..." targetRef="..."> conectando secuencialmente Start -> Task_1 -> Task_2 -> ... -> EndEvent. Asegura IDs únicos y referencias correctas.
+DEBE incluir la sección <bpmndi:BPMNDiagram> con un <bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1"> (referenciando el ID del PROCESO).
+DEBE incluir dentro del <bpmndi:BPMNPlane>, las etiquetas <bpmndi:BPMNShape> para CADA StartEvent, UserTask y EndEvent, y <bpmndi:BPMNEdge> para CADA SequenceFlow. Usa los IDs correctos en el atributo bpmnElement. Puedes usar coordenadas y tamaños FIJOS/PLACEHOLDER (ver ejemplo abajo), no necesitas calcularlos.
+Asegúrate de que TODO el XML sea perfectamente formado y todas las etiquetas estén cerradas correctamente.
+Ejemplo MÍNIMO de la estructura DI requerida dentro de BPMNPlane (usa IDs y coordenadas similares):
+<bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1">
+  <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+    <dc:Bounds x="100" y="100" width="36" height="36" />
+  </bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1"> <!-- Asegúrate que bpmnElement coincida con el ID de la tarea -->
+    <dc:Bounds x="200" y="80" width="100" height="80" />
+  </bpmndi:BPMNShape>
+  <bpmndi:BPMNEdge id="Flow_0_di" bpmnElement="Flow_0"> <!-- Asegúrate que bpmnElement coincida con el ID del flow -->
+    <di:waypoint x="136" y="118" /> <!-- Punto de salida del start event -->
+    <di:waypoint x="200" y="118" /> <!-- Punto de entrada de la task -->
+  </bpmndi:BPMNEdge>
+  <!-- Repetir Shape y Edge para cada Task y Flow -->
+  <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+    <dc:Bounds x="500" y="100" width="36" height="36" />
+  </bpmndi:BPMNShape>
+</bpmndi:BPMNPlane>
+Use code with caution.
+Xml
+¡IMPORTANTE! Prioriza obtener un JSON válido y la precisión de detailed_steps. El BPMN debe ser estructuralmente correcto y simple.
 """
     # Configuración de generación
     generation_config = {
