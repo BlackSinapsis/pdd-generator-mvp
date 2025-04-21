@@ -1,24 +1,19 @@
 # -*- coding: utf-8 -*-
-import cv2 # OpenCV para video/imágenes
-import json # Para leer JSON
-import os   # Para manejar rutas y carpetas
-import sys  # (Menos usado aquí, pero buena práctica importarlo)
+import cv2
+import json
+import os
+import sys
+import shutil # Asegúrate que esta importación esté
 
 # --- Configuración ---
-# ¡¡VERIFICA QUE ESTOS NOMBRES COINCIDAN CON TUS ARCHIVOS!!
-# JSON COMPLEJO generado en Fase 1.2
-JSON_INPUT_PATH = 'full_analysis_output.json' # <--- CAMBIO CLAVE 1: Nuevo archivo de entrada
-# Video original analizado
-VIDEO_PATH = 'video_1.mkv'                     # <--- Nombre de tu video
-# Carpeta donde se guardarán los screenshots
+JSON_INPUT_PATH = 'full_analysis_output.json'
+VIDEO_PATH = 'video_1.mkv'
 OUTPUT_DIR = 'screenshots_output'
 # --- Fin de la Configuración ---
 
 def extract_screenshots(json_path: str, video_path: str, output_dir: str):
     """
-    Lee un archivo JSON complejo (con estructura PDD), extrae la lista
-    de pasos detallados, y guarda los fotogramas correspondientes
-    de un archivo de video usando OpenCV. Devuelve True/False.
+    Lee JSON complejo, limpia directorio de salida, extrae fotogramas. Devuelve True/False.
     """
     print(f"--- Iniciando Fase 2.2: Extracción de Screenshots (Adaptada) ---")
     print(f"JSON de entrada (Complejo): {json_path}")
@@ -27,23 +22,18 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
 
     # 1. Cargar datos del JSON Complejo
     print(f"\n[Paso 1/5] Cargando datos complejos desde '{json_path}'...")
+    steps_list = [] # Inicializar como lista vacía
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
-            # Ahora 'full_data' será un diccionario completo
             full_data = json.load(f)
         print(f"Datos JSON complejos cargados exitosamente.")
-
-        # --- CAMBIO CLAVE 2: Extraer la lista de pasos del diccionario ---
-        # Accedemos a la clave 'detailed_steps' que definimos en el prompt
-        # Usamos .get() con default a lista vacía por seguridad
         steps_list = full_data.get("detailed_steps", [])
-        if not steps_list: # Verifica si la lista está vacía o no se encontró la clave
-             print(f"Advertencia/Error: No se encontró la lista 'detailed_steps' o está vacía en '{json_path}'.")
-             # Decidimos si esto es un error crítico o no. Por ahora, permitimos continuar
-             # pero no se extraerán screenshots. Podrías retornar False aquí si prefieres.
+        if not steps_list:
+             print(f"Advertencia: No se encontró la lista 'detailed_steps' o está vacía en '{json_path}'. No se extraerán screenshots.")
+             # Si no hay pasos, podemos considerar la operación exitosa pero sin acción
+             # O retornar False si se considera un error no tener pasos.
+             # Por ahora, continuamos para permitir la limpieza si es necesario.
         print(f"Se encontraron {len(steps_list)} pasos detallados para procesar.")
-        # --- FIN CAMBIO CLAVE 2 ---
-
     except FileNotFoundError:
         print(f"Error Crítico: No se encontró el archivo JSON en '{json_path}'")
         return False
@@ -55,25 +45,55 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
         print(f"Error Crítico inesperado al leer el JSON: {e}")
         return False
 
-    # 2. Crear directorio de salida si no existe (Sin cambios)
-    print(f"\n[Paso 2/5] Asegurando directorio de salida '{output_dir}'...")
+    # 2. Asegurar y Limpiar Directorio de Salida
+    print(f"\n[Paso 2/5] Asegurando y limpiando directorio de salida '{output_dir}'...")
     try:
-        os.makedirs(output_dir, exist_ok=True)
-        print(f"Directorio '{output_dir}' listo.")
-    except OSError as e:
-        print(f"Error Crítico: No se pudo crear el directorio de salida '{output_dir}'.")
-        print(f"Detalle del error: {e}")
-        return False
+        existed_before = os.path.isdir(output_dir)
+        os.makedirs(output_dir, exist_ok=True) # Crea si no existe
 
-    # 3. Abrir el archivo de video (Sin cambios, pero atento al formato MKV)
+        if existed_before:
+            print(f"  - Limpiando contenido previo de '{output_dir}'...")
+            cleaned_count = 0
+            error_clean_count = 0
+            for filename in os.listdir(output_dir):
+                file_path = os.path.join(output_dir, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                        cleaned_count += 1
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                        cleaned_count += 1
+                except Exception as e:
+                    print(f"    Advertencia: No se pudo borrar '{file_path}'. Razón: {e}")
+                    error_clean_count +=1
+            if error_clean_count == 0:
+                print(f"  - Limpieza completada ({cleaned_count} items eliminados).")
+            else:
+                 print(f"  - Limpieza completada con {error_clean_count} errores.")
+        else:
+            print(f"Directorio '{output_dir}' creado.") # Mensaje si era nuevo
+
+    except OSError as e:
+        print(f"Error Crítico: No se pudo crear/acceder al directorio de salida '{output_dir}'.")
+        print(f"Detalle del error: {e}")
+        return False # Falla si no podemos asegurar el directorio
+
+    # --- AHORA SÍ CONTINUAMOS CON EL RESTO ---
+
+    # Si no había pasos en el JSON, terminamos aquí exitosamente (no hay nada que extraer)
+    if not steps_list:
+         print("\nNo hay pasos detallados para procesar. Finalizando extracción.")
+         return True
+
+    # 3. Abrir el archivo de video
     print(f"\n[Paso 3/5] Abriendo archivo de video '{video_path}'...")
     video_capture = cv2.VideoCapture(video_path)
     if not video_capture.isOpened():
         print(f"Error Crítico: No se pudo abrir el archivo de video '{video_path}'.")
-        print("Verifica la ruta, formato (MKV requiere codecs) y si el archivo está corrupto.")
         return False
 
-    # 4. Obtener información del video (FPS y total de fotogramas) (Sin cambios)
+    # 4. Obtener información del video (FPS y total de fotogramas)
     print(f"\n[Paso 4/5] Obteniendo información del video...")
     fps = video_capture.get(cv2.CAP_PROP_FPS)
     total_frames = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -90,12 +110,10 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
     extracted_count = 0
     skipped_count = 0
     error_count = 0
-
-    # --- CAMBIO CLAVE 3: Iterar sobre 'steps_list' ---
-    for step in steps_list: # Ahora iteramos sobre la lista extraída
-    # --- FIN CAMBIO CLAVE 3 ---
+    # --- Iterar sobre 'steps_list' ---
+    for step in steps_list:
+        # ... (resto del bucle for, cálculo de frame, set, read, imwrite - SIN CAMBIOS DESDE LA VERSIÓN ANTERIOR DE 2.2) ...
         step_number = step.get("step_number")
-        # Ya no necesitamos la descripción aquí, pero sí el timestamp
         timestamp_ms = step.get("timestamp_ms")
 
         if step_number is None or timestamp_ms is None:
@@ -104,12 +122,9 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
             continue
 
         print(f"  - Procesando Paso {step_number}: @ {timestamp_ms} ms")
-
-        # --- Cálculo del Fotograma Objetivo (Sin cambios) ---
         timestamp_sec = timestamp_ms / 1000.0
         target_frame = int(timestamp_sec * fps)
 
-        # --- Verificación de Límites (Sin cambios) ---
         if target_frame >= total_frames:
             print(f"    Advertencia: Timestamp {timestamp_ms}ms (fotograma {target_frame}) excede total ({total_frames}). Usando último.")
             target_frame = total_frames - 1
@@ -117,11 +132,9 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
              print(f"    Advertencia: Timestamp {timestamp_ms}ms resulta en fotograma negativo ({target_frame}). Usando primero (0).")
              target_frame = 0
 
-        # --- Ir al Fotograma y Leerlo (Sin cambios) ---
         video_capture.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
         ret, frame = video_capture.read()
 
-        # --- Guardar el Fotograma (Sin cambios en la lógica de guardado) ---
         if ret:
             screenshot_filename = f"screenshot_paso_{step_number}.png"
             screenshot_path = os.path.join(output_dir, screenshot_filename)
@@ -139,8 +152,9 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
         else:
             print(f"    Error: No se pudo leer el fotograma {target_frame} para el paso {step_number}.")
             error_count += 1
+    # --- Fin del bucle for ---
 
-    # --- Limpieza Final (Sin cambios) ---
+    # --- Limpieza Final ---
     print("\n--- Proceso de Extracción Finalizado ---")
     print(f"Screenshots extraídos exitosamente: {extracted_count}")
     print(f"Pasos omitidos (datos faltantes en JSON): {skipped_count}")
@@ -148,14 +162,17 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
     video_capture.release()
     print("Recurso de video liberado.")
 
-    if error_count > 0 or (skipped_count > 0 and extracted_count == 0): # Consideramos fallo si hubo errores o si se omitieron todos los pasos
+    # Devolvemos False solo si hubo errores *durante la extracción/guardado*
+    # O si no se encontró la lista de pasos y se considera un error.
+    # No consideramos los errores de limpieza como fallo del objetivo principal.
+    if error_count > 0 : # or (not steps_list and extracted_count == 0) # Descomentar si no tener pasos debe ser error
          return False
     return True
 
-# --- Bloque de Ejecución Principal (Sin cambios) ---
+# --- Bloque de Ejecución Principal ---
 if __name__ == "__main__":
     success = extract_screenshots(JSON_INPUT_PATH, VIDEO_PATH, OUTPUT_DIR)
     if success:
         print("\n--- Fase 2.2 Completada Exitosamente ---")
     else:
-        print("\n--- Fase 2.2 Completada con Errores/Advertencias ---")
+        print("\n--- Fase 2.2 Completada con Errores/Advertencias en Extracción/Guardado ---")
