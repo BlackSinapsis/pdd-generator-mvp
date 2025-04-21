@@ -14,10 +14,56 @@ MODEL_NAME = "gemini-2.5-pro-exp-03-25"
 # Ruta a tu archivo de video local
 VIDEO_PATH = "video_1.mkv"
 # Archivo donde se guardará la salida JSON
-OUTPUT_JSON_PATH = "pasos_ia_api_output.json"
-# Archivo para fase II
-EXAMPLE_JSON_PATH = "pasos_ia_api_example.json"
+OUTPUT_JSON_PATH = "full_analysis_output.json"
 # --- FIN DE LA CONFIGURACIÓN ---
+
+# <<< --- FUNCIÓN PARA CALCULAR COSTO --- >>>
+def calculate_estimated_cost(input_tokens: int, output_tokens: int) -> float:
+    """
+    Calcula el costo estimado basado en tokens de entrada/salida y
+    la tabla de precios proporcionada (por 1 millón de tokens).
+
+    Args:
+        input_tokens: Número de tokens de entrada.
+        output_tokens: Número de tokens de salida.
+
+    Returns:
+        El costo estimado en USD para el nivel pagado.
+    """
+    # --- Precios (Basados en la tabla, por 1 millón de tokens) ---
+    # ¡¡¡ ACTUALIZA ESTOS VALORES SI LOS PRECIOS OFICIALES CAMBIAN !!!
+    INPUT_THRESHOLD = 200000
+    OUTPUT_THRESHOLD = 200000
+    INPUT_RATE_LOW = 1.25    # USD por 1M tokens si input <= threshold
+    INPUT_RATE_HIGH = 2.50   # USD por 1M tokens si input > threshold
+    OUTPUT_RATE_LOW = 10.00  # USD por 1M tokens si output <= threshold
+    OUTPUT_RATE_HIGH = 15.00 # USD por 1M tokens si output > threshold
+    TOKENS_PER_MILLION = 1_000_000.0 # Usar float para división precisa
+    # ---------------------------------------------------------
+
+    # Calcular tarifa de entrada aplicable
+    if input_tokens <= INPUT_THRESHOLD:
+        input_rate = INPUT_RATE_LOW
+    else:
+        input_rate = INPUT_RATE_HIGH
+
+    # Calcular costo de entrada
+    cost_input = (input_tokens / TOKENS_PER_MILLION) * input_rate
+
+    # Calcular tarifa de salida aplicable
+    if output_tokens <= OUTPUT_THRESHOLD:
+        output_rate = OUTPUT_RATE_LOW
+    else:
+        output_rate = OUTPUT_RATE_HIGH
+
+    # Calcular costo de salida
+    cost_output = (output_tokens / TOKENS_PER_MILLION) * output_rate
+
+    # Calcular costo total
+    total_cost = cost_input + cost_output
+
+    return total_cost
+# <<< --- FIN DE LA FUNCIÓN --- >>>
 
 def analyze_video_steps(project_id: str, location: str, model_name: str, video_path: str):
     """
@@ -67,105 +113,107 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
         return None
 
     # Define el prompt detallado
-    prompt = """Analiza este video que muestra un proceso en una computadora. Tu tarea es identificar CADA acción significativa y VISIBLE realizada por el usuario y describirla con MÁXIMO DETALLE, extrayendo texto EXACTO de la pantalla. Para cada paso:
+    prompt = """Eres un asistente experto en análisis de procesos de negocio y documentación técnica, especializado en crear Documentos de Descripción de Procesos (PDD) a partir de grabaciones de pantalla. Analiza exhaustivamente el siguiente video que muestra un proceso realizado en una computadora. Tu objetivo es extraer toda la información relevante y estructurarla en un único objeto JSON que sirva como base para un PDD completo.
 
-1.  **Número de Paso:** Secuencial (1, 2, 3...).
-2.  **Descripción EXTREMADAMENTE Detallada:** Describe la acción. DEBES incluir el texto EXACTO y VISIBLE de los elementos de la interfaz con los que se interactúa:
-    *   **Botones:** Menciona el texto COMPLETO del botón (ej: "Clic en el botón 'Guardar Como...'"). EVITA 'hacer clic en el ícono'.
-    *   **Menús:** Ruta completa (ej: "Seleccionar menú 'Archivo' -> Opción 'Exportar...'").
-    *   **Texto Ingresado:** El texto EXACTO (ej: "Escribir 'cotizaciones bcra' en la barra de búsqueda").
-    *   **URLs:** **IMPRESCINDIBLE: Si se navega a una URL, incluye la URL COMPLETA y EXACTA visible en la barra de direcciones** (ej: "Navegar a la URL 'https://www.ejemplo.com/pagina/datos'").
-    *   **Enlaces:** El texto EXACTO del hipervínculo clickeado (ej: "Clic en el enlace 'Descargar Reporte (PDF)'").
-    *   **CELDAS (Excel, Sheets, etc.):** **IMPRESCINDIBLE: Si se interactúa con una celda (clic, pegar, escribir), especifica la referencia EXACTA de la celda VISIBLE** (ej: "Hacer clic en la celda 'C5'", "Pegar datos comenzando en la celda 'B2'").
-    *   **Nombres de Archivo:** El nombre COMPLETO y EXACTO al guardar, abrir, etc. (ej: "Guardar como 'Reporte_Financiero_Q3.xlsx'").
-3.  **Timestamp (ms):** El momento EXACTO (en milisegundos desde el inicio) donde ocurre la acción principal del paso (el clic, el final de la escritura).
+**Instrucciones Generales:**
+1.  Observa atentamente CADA acción visual y cambio significativo en pantalla.
+2.  Infiere el contexto y propósito basándote ÚNICAMENTE en lo visible y las acciones realizadas. Evita suposiciones externas.
+3.  Genera la salida **estrictamente** en el formato JSON especificado al final, sin ningún texto introductorio, comentarios, ni marcado como ```json ... ```. La respuesta DEBE ser solo el objeto JSON.
 
-**FORMATO DE SALIDA OBLIGATORIO:**
-*   **ÚNICAMENTE JSON VÁLIDO.**
-*   Una lista `[]` de objetos `{}`.
-*   Cada objeto DEBE tener SÓLO estas tres claves: `"step_number"` (entero), `"description"` (cadena de texto con los detalles pedidos), `"timestamp_ms"` (entero).
-*   **SIN texto introductorio, SIN explicaciones, SIN comentarios, SIN marcado como ```json ... ```.** La respuesta debe empezar con `[` y terminar con `]`.
+**Estructura JSON de Salida Requerida:**
+La salida debe ser un objeto JSON con las siguientes claves principales:
 
-Ejemplo de formato y detalle REQUERIDO:
-[
-  {
-    "step_number": 1,
-    "description": "Abrir navegador Google Chrome.",
-    "timestamp_ms": 1500
+```json
+{
+  "pdd_metadata_inferred": {
+    "process_name_suggestion": "string | null",
+    "potential_acronym": "string | null"
   },
-  {
-    "step_number": 2,
-    "description": "Navegar a la URL 'https://www.google.com/' visible en la barra de direcciones.",
-    "timestamp_ms": 3200
-  },
-  {
-    "step_number": 3,
-    "description": "Escribir 'banco central cotizaciones' en la barra de búsqueda.",
-    "timestamp_ms": 9500
-  },
-  {
-    "step_number": 4,
-    "description": "Hacer clic en el enlace del resultado de búsqueda 'Estadísticas | Principales variables - BCRA | bcra.gob.ar'.",
-    "timestamp_ms": 11500
-  },
-  {
-    "step_number": 5,
-    "description": "Navegar a la URL 'https://www.bcra.gob.ar/PublicacionesEstadisticas/Principales_variables.asp' visible en la barra de direcciones.",
-    "timestamp_ms": 11900
-  },
-  {
-    "step_number": 6,
-    "description": "Hacer clic en el enlace 'Planilla de Cierre de Cotizaciones (.xls)'.",
-    "timestamp_ms": 18800
-  },
-  {
-    "step_number": 7,
-    "description": "En el diálogo 'Guardar Como', hacer clic en el botón 'Guardar'.",
-    "timestamp_ms": 20000
-  },
-  {
-    "step_number": 8,
-    "description": "Hacer clic en el archivo descargado 'Cotizaciones.xls' en la barra inferior.",
-    "timestamp_ms": 26000
-  },
-  {
-    "step_number": 9,
-    "description": "En Microsoft Excel, hacer clic en el botón 'Cerrar' de la ventana de error 'Formato de archivo'.",
-    "timestamp_ms": 33100
-  },
-  {
-    "step_number": 10,
-    "description": "Volver al navegador y seleccionar el texto de la tabla desde '01/07/2024' hasta '73.5000'.",
-    "timestamp_ms": 36100
-  },
-  {
-    "step_number": 11,
-    "description": "Copiar selección (usando Ctrl+C).",
-    "timestamp_ms": 40100
-  },
-  {
-    "step_number": 12,
-    "description": "Cambiar a Microsoft Excel, abrir un nuevo libro en blanco.",
-    "timestamp_ms": 42000
-  },
-  {
-    "step_number": 13,
-    "description": "Hacer clic en la celda 'B2'.",
-    "timestamp_ms": 44000
-  },
-  {
-    "step_number": 14,
-    "description": "Pegar datos (usando Ctrl+V) comenzando en la celda 'B2'.",
-    "timestamp_ms": 44200
-  }
-]
+  "introduction_text": "string",
+  "business_context_text": "string",
+  "user_roles_inferred": ["string"],
+  "process_overview_text": "string",
+  "detailed_steps": [
+    {
+      "step_number": "integer",
+      "description": "string",            // RESUMEN de la acción
+      "timestamp_ms": "integer",
+      "application_in_focus": "string",
+      "action_type_inferred": "string"    // Descripción ULTRA DETALLADA
+    }
+  ],
+  "potential_exceptions_suggestions": [
+    {
+      "exception_id": "string",
+      "description": "string",
+      "potential_trigger": "string",
+      "suggested_resolution": "string"
+    }
+  ],
+  "bpmn_xml_code": "string" // String conteniendo el CÓDIGO XML BPMN 2.0 SIMPLE pero VÁLIDO
+}
+Use code with caution.
+Python
+Detalle de Secciones a Generar:
+pdd_metadata_inferred:
+process_name_suggestion: Infiere un nombre corto (ej: "Descarga Cotizaciones BCRA"). Si no, null.
+potential_acronym: Infiere acrónimo. Si no, null.
+introduction_text: Genera 1-2 párrafos (propósito/alcance inferido del video). Ejemplo: "Este documento describe el proceso observado para obtener y formatear datos de cotizaciones del BCRA usando navegador y Excel..."
+business_context_text: Genera 1-2 párrafos (propósito de negocio inferido). Ejemplo: "El proceso parece orientado a la recopilación de datos financieros para análisis..."
+user_roles_inferred: Lista roles por aplicación (ej: "Usuario Navegador Web", "Usuario Microsoft Excel").
+process_overview_text: Resumen alto nivel (3-5 frases) de pasos clave observados.
+detailed_steps: Lista de objetos por paso:
+step_number: Secuencial (1, 2, 3...).
+description: Resumen corto de la acción (ej: "Abrir nueva instancia de Excel").
+timestamp_ms: Momento clave (entero).
+application_in_focus: Aplicación principal (ej: "Microsoft Excel"). Si no clara, "Desconocida".
+action_type_inferred:**Descripción ULTRA DETALLADA, enfocada en la interacción precisa con la UI.**
+        *   Incluye el texto EXACTO de botones, menús, enlaces, URLs visibles, texto tecleado, nombres de archivo.
+        *   **¡ATENCIÓN ESPECIAL A HOJAS DE CÁLCULO (Excel, Sheets)!:**
+            *   Si se hace clic en una celda, se escribe en ella, o **se pegan datos**, identifica la **REFERENCIA EXACTA de la celda (ej: 'B2', 'C5', 'A1')** visible donde comienza la acción.
+            *   Si es posible inferir el **nombre de la columna** bajo la cual se pega o edita (basado en encabezados visibles), menciónalo (ej: "Pegar datos en celda 'B2' bajo la columna 'Fecha'").
+            *   Si se selecciona un rango, indica el rango (ej: "Seleccionar rango 'A1:C10'").
+        *   Sé lo más específico posible sobre el *lugar* de la interacción. Ejemplo detallado: "Pegar datos (Ctrl+V) en la hoja 'Sheet1', comenzando **específicamente en la celda 'B2'**."
+potential_exceptions_suggestions: Sugiere 2-3 excepciones comunes (objetos con id, desc, trigger, resolution).
+bpmn_xml_code: ¡Genera código XML BPMN 2.0 VÁLIDO y SIMPLIFICADO!
+Analiza la secuencia de detailed_steps.
+DEBE incluir el encabezado XML (<?xml...?>) y <bpmn:definitions ...> con namespaces y un targetNamespace.
+DEBE incluir un <bpmn:process id="GeneratedProcess_1">.
+NO INCLUIR: Collaboration, Participant, LaneSet, Lanes.
+DEBE incluir un <bpmn:startEvent id="StartEvent_1">.
+DEBE incluir una secuencia de <bpmn:userTask id="Task_{step_number}" name="{description}">. Usa el campo description (el resumen corto) del paso como name. Asegura IDs únicos (Task_1, Task_2, etc.).
+DEBE incluir un <bpmn:endEvent id="EndEvent_1">.
+DEBE incluir los <bpmn:sequenceFlow id="Flow_{id_unico}" sourceRef="..." targetRef="..."> conectando secuencialmente Start -> Task_1 -> Task_2 -> ... -> EndEvent. Asegura IDs únicos y referencias correctas.
+DEBE incluir la sección <bpmndi:BPMNDiagram> con un <bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1"> (referenciando el ID del PROCESO).
+DEBE incluir dentro del <bpmndi:BPMNPlane>, las etiquetas <bpmndi:BPMNShape> para CADA StartEvent, UserTask y EndEvent, y <bpmndi:BPMNEdge> para CADA SequenceFlow. Usa los IDs correctos en el atributo bpmnElement. Puedes usar coordenadas y tamaños FIJOS/PLACEHOLDER (ver ejemplo abajo), no necesitas calcularlos.
+Asegúrate de que TODO el XML sea perfectamente formado y todas las etiquetas estén cerradas correctamente.
+Ejemplo MÍNIMO de la estructura DI requerida dentro de BPMNPlane (usa IDs y coordenadas similares):
+<bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1">
+  <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+    <dc:Bounds x="100" y="100" width="36" height="36" />
+  </bpmndi:BPMNShape>
+  <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1"> <!-- Asegúrate que bpmnElement coincida con el ID de la tarea -->
+    <dc:Bounds x="200" y="80" width="100" height="80" />
+  </bpmndi:BPMNShape>
+  <bpmndi:BPMNEdge id="Flow_0_di" bpmnElement="Flow_0"> <!-- Asegúrate que bpmnElement coincida con el ID del flow -->
+    <di:waypoint x="136" y="118" /> <!-- Punto de salida del start event -->
+    <di:waypoint x="200" y="118" /> <!-- Punto de entrada de la task -->
+  </bpmndi:BPMNEdge>
+  <!-- Repetir Shape y Edge para cada Task y Flow -->
+  <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+    <dc:Bounds x="500" y="100" width="36" height="36" />
+  </bpmndi:BPMNShape>
+</bpmndi:BPMNPlane>
+Use code with caution.
+Xml
+¡IMPORTANTE! Prioriza obtener un JSON válido y la precisión de detailed_steps. El BPMN debe ser estructuralmente correcto y simple.
 """
     # Configuración de generación
     generation_config = {
         "temperature": 1,
         "top_p": 0.95,
         "top_k": 40,
-        "max_output_tokens": 5000,
+        "max_output_tokens": 20000,
     }
 
     # Configuración de seguridad
@@ -187,6 +235,32 @@ Ejemplo de formato y detalle REQUERIDO:
             stream=False,
         )
         print("Respuesta recibida de la API.")
+        try:
+            # Acceder a los metadatos de uso
+            usage_metadata = response.usage_metadata
+            if usage_metadata:
+                input_tokens = usage_metadata.prompt_token_count
+                output_tokens = usage_metadata.candidates_token_count
+                total_tokens = usage_metadata.total_token_count
+                print("\n--- Información de Uso de Tokens ---")
+                print(f" - Tokens de Entrada (Prompt + Video): {input_tokens}")
+                print(f" - Tokens de Salida (Respuesta): {output_tokens}")
+                print(f" - Tokens Totales: {total_tokens}")
+                print("------------------------------------")
+
+                # <<< --- LLAMADA A LA FUNCIÓN DE CÁLCULO DE COSTO --- >>>
+                estimated_cost = calculate_estimated_cost(input_tokens, output_tokens)
+                # Mostrar el costo formateado (ej: con 6 decimales para precisión)
+                print(f" - Costo Estimado (USD, Nivel Pagado): ${estimated_cost:.5f}")
+                print("   (Basado en precios por millón de tokens: Input <=200k=$1.25, >200k=$2.50; Output <=200k=$10.00, >200k=$15.00)")
+                print("   (Nota: El costo real puede variar y depende del nivel gratuito aplicable. Revisa la facturación de GCP.)")
+                # <<< --- FIN DE LA LLAMADA Y MUESTRA DE COSTO --- >>>
+
+            else:
+                print("\nAdvertencia: No se encontraron metadatos de uso de tokens en la respuesta.")
+        except Exception as e:
+            print(f"\nAdvertencia: No se pudo obtener la información de uso de tokens: {e}")
+    
 
         if response.candidates and response.candidates[0].content.parts:
             raw_response_text = response.candidates[0].content.parts[0].text
@@ -279,16 +353,6 @@ if __name__ == "__main__":
             print(f"\nResultado COMPLETO guardado en: {OUTPUT_JSON_PATH}")
         except Exception as e:
             print(f"\nAdvertencia: Error al guardar el archivo JSON de salida directa '{OUTPUT_JSON_PATH}': {e}")
-
-        # Guardar la copia para Fase 2 (según el plan original)
-        try:
-            with open(EXAMPLE_JSON_PATH, 'w', encoding='utf-8') as f:
-                json.dump(extracted_steps, f, indent=2, ensure_ascii=False)
-            print(f"Copia de EJEMPLO para Fase 2 guardada en: {EXAMPLE_JSON_PATH}")
-            print("\n--- Fase 1 Completada Exitosamente (JSON generado y guardado) ---")
-        except Exception as e:
-            print(f"\nAdvertencia: Error al guardar el archivo JSON de ejemplo '{EXAMPLE_JSON_PATH}': {e}")
-
     else:
         print(f"\n--- Fase 1 Fallida ---")
         print(f"Error principal: {error}")

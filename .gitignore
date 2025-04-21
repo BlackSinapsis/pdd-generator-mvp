@@ -17,8 +17,12 @@ __pycache__/
 
 # Archivos de salida generados (opcional, pero bueno para evitar commits accidentales)
 screenshots_output/
-# pdd_output.md
+pdd_output.md
 pasos_ia_api_output.json
+full_analysis_output.json
+PDD_Generated_Output.docx
+Generated_Process.bpmn
+screenshots_output/
 # pasos_ia_ejemplo.json  <-- Puedes decidir si versionar el ejemplo o no
 
 # Archivos de configuración local (si usaras .env en el futuro)
