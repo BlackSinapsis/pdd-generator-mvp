@@ -172,10 +172,10 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
     * `process_name_suggestion`: Infiere nombre corto y descriptivo.
     * `potential_acronym`: Infiere acrónimo si aplica.
 * **`section_1_1_purpose_text`**: Genera 1-2 frases sobre el propósito inferido de documentar este proceso.
-* **`section_1_2_objectives_text`**: Genera 1-2 frases sugiriendo posibles objetivos de negocio que la automatización podría abordar (ej: "Reducir tiempo manual", "Minimizar errores de copia"). *Muy especulativo.*
+* **`section_1_2_objectives_text`**: **REVISADO:** Basándote en las ineficiencias o tareas manuales repetitivas observadas en el video, genera 1-2 frases describiendo los **objetivos directos** que la automatización buscaría lograr. Usa un lenguaje asertivo. Ejemplos: "Reducir el tiempo dedicado a la recopilación manual de datos.", "Minimizar los errores humanos asociados a la copia y pegado.", "Asegurar la disponibilidad oportuna de las cotizaciones para análisis." *Nota: Aunque el lenguaje es directo, estos siguen siendo objetivos inferidos del video y requieren validación humana.*
 * **`section_1_3_1_scope_in_suggestion`**: Genera una lista o frases cortas de las tareas principales observadas que *parecen* ser el núcleo del proceso a automatizar. *Muy especulativo.*
 * **`section_1_3_2_scope_out_suggestion`**: Genera una lista o frases cortas de tareas observadas que *podrían* quedar fuera (ej: login, preparación inicial, pasos muy complejos o ambiguos). *Muy especulativo.*
-* **`section_2_0_context_text`**: Genera 1-2 párrafos describiendo el contexto funcional inferido (ej: "Parece un proceso del área financiera...", "Involucra el uso de navegador y hoja de cálculo...").
+* **`section_2_0_context_text`**: **REVISADO:** Genera 1-2 párrafos describiendo el contexto funcional observado en el video. Usa un lenguaje asertivo. Ejemplo: "El proceso se desarrolla en el contexto de la recopilación de datos financieros, involucrando el uso de un navegador web y una hoja de cálculo." *Nota: Esta descripción se basa únicamente en las aplicaciones y acciones visibles y requiere validación humana para confirmar el contexto de negocio real.*
 * **`section_3_1_as_is_summary_text`**: Genera un resumen de 3-5 frases del flujo principal observado de principio a fin.
 * **`section_3_1_user_roles_inferred`**: Lista los roles inferidos basados en las aplicaciones usadas (ej: "Usuario Navegador Web", "Usuario Microsoft Excel").
 * **`section_3_2_bpmn_xml_code`**: **¡Genera código XML BPMN 2.0 VÁLIDO y SIMPLIFICADO!**
@@ -215,8 +215,8 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
             * Si se hace clic en una celda, se escribe en ella, o **se pegan datos**:
                 * Identifica la **REFERENCIA EXACTA de la celda (ej: 'B2', 'C5', 'A1')** visible donde ocurre o comienza la acción. ¡Sé muy preciso!
                 * Identifica el **NOMBRE DE LA HOJA (Worksheet) activa** (ej: 'Sheet1', 'Hoja1', 'Datos') si es visible.
-                * Identifica el **NOMBRE DEL ENCABEZADO DE COLUMNA** directamente sobre la celda de acción, si es visible (ej: "Columna 'Fecha'", "Encabezado 'Vendedor'").
-            * Si se selecciona un rango, indica el rango exacto (ej: "Seleccionar rango 'A1:C10' en hoja 'Sheet1'").
+                * Si existe, Identifica el **NOMBRE DEL ENCABEZADO DE COLUMNA** directamente sobre la celda de acción, si es visible (ej: "Columna 'Fecha'", "Encabezado 'Vendedor'").
+            * Si se selecciona o pega los datos en un rango, indica el rango exacto (ej: "Seleccionar rango 'A1:C10' en hoja 'Sheet1'").
         * Sé lo más específico posible sobre el *lugar* y *contexto* de la interacción. Ejemplo detallado: "Pegar datos (Ctrl+V) en la hoja **'Hoja1'**, comenzando **específicamente en la celda 'B2'** bajo la columna **'Fecha'**."
 * **`section_3_4_inputs_suggestion`**: Describe brevemente los inputs inferidos (ej: "Sitio web X", "Archivo Y descargado"). *Especulativo.*
 * **`section_3_5_outputs_suggestion`**: Describe brevemente los outputs inferidos (ej: "Datos pegados en Excel", "Archivo Z guardado"). *Especulativo.*
@@ -235,7 +235,7 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
 """
     # Configuración de generación
     generation_config = {
-        "temperature": 0.5,
+        "temperature": 0.7,
         "top_p": 0.95,
         "top_k": 40,
         "max_output_tokens": 20000,

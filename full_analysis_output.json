@@ -1,135 +1,164 @@
 {
   "pdd_metadata_inferred": {
-    "process_name_suggestion": "Descarga y Copia Cotizaciones BCRA",
-    "potential_acronym": null
+    "process_name_suggestion": "Obtener Cotizaciones del Banco Central (BCRA)",
+    "potential_acronym": "OCBCRA"
   },
-  "introduction_text": "Este documento describe el proceso observado para obtener datos de cotizaciones del sitio web del Banco Central de la República Argentina (BCRA) y transferirlos a una hoja de cálculo de Microsoft Excel. El proceso incluye la navegación web, la búsqueda de información específica, la descarga de un archivo, el intento fallido de abrir dicho archivo, y la posterior copia manual de los datos desde la página web a una nueva hoja de Excel.",
-  "business_context_text": "El propósito de este proceso parece ser la recopilación de datos históricos de tipos de cambio minorista publicados por el BCRA. Involucra el uso de un navegador web estándar para acceder a datos públicos y Microsoft Excel para almacenar y potencialmente analizar estos datos, sugiriendo un contexto de análisis financiero, seguimiento de mercado o reporte.",
-  "user_roles_inferred": [
+  "section_1_1_purpose_text": "Documentar el proceso manual actual para obtener las cotizaciones de tipo de cambio minorista desde el sitio web del Banco Central de la República Argentina (BCRA) y transferirlas a una hoja de cálculo Excel.",
+  "section_1_2_objectives_text": "Reducir el tiempo dedicado a la obtención manual de datos de cotizaciones. Minimizar los errores humanos asociados a la copia y pegado de información entre la web y Excel. Asegurar la disponibilidad oportuna y consistente de las cotizaciones para su uso posterior.",
+  "section_1_3_1_scope_in_suggestion": "Navegación al sitio web del BCRA.\nLocalización de la tabla de 'Planilla de Cierre de Cotizaciones'.\nIntento de descarga del archivo Excel.\nCopia manual de los datos de la tabla web.\nApertura de Microsoft Excel.\nPegado de los datos copiados en una hoja de cálculo.",
+  "section_1_3_2_scope_out_suggestion": "Inicio/cierre de la sesión del usuario en el sistema operativo.\nConfiguración o manejo del software de grabación (OBS).\nResolución detallada del error al abrir el archivo Excel descargado (se optó por la vía manual).\nCualquier procesamiento o análisis posterior de los datos en Excel.\nGuardado final del archivo Excel.",
+  "section_2_0_context_text": "El proceso se ejecuta en un entorno de escritorio Windows estándar. Involucra la interacción con un navegador web (Microsoft Edge) para acceder a información pública financiera desde el sitio web oficial del Banco Central de la República Argentina (BCRA). Posteriormente, se utiliza Microsoft Excel para almacenar los datos recopilados. El objetivo funcional es la extracción y consolidación de datos de cotizaciones cambiarias.",
+  "section_3_1_as_is_summary_text": "El usuario inicia buscando 'banco central cotizaciones' en Google a través del navegador Edge. Accede a la página 'Planilla de Cierre de Cotizaciones' del BCRA. Intenta descargar un archivo Excel (.xlsx) con los datos, pero al abrirlo, Microsoft Excel muestra un error y el archivo parece vacío o corrupto. Como alternativa, el usuario selecciona manualmente las filas y columnas deseadas directamente de la tabla HTML en la página web, las copia (Ctrl+C), abre una nueva instancia de Microsoft Excel con una hoja en blanco y pega los datos (Ctrl+V) en la celda A1.",
+  "section_3_1_user_roles_inferred": [
     "Usuario Navegador Web",
-    "Usuario Microsoft Excel",
-    "Usuario OBS Studio"
+    "Usuario Microsoft Excel"
   ],
-  "process_overview_text": "El proceso comienza grabando la pantalla con OBS Studio. Luego, el usuario abre un navegador web, busca 'banco central cotizaciones' en Google y navega a la página de 'Planilla de Cierre de Cotizaciones' del BCRA. Intenta descargar y abrir un archivo Excel (.xlw) desde la página, lo cual falla. Posteriormente, selecciona y copia manualmente los datos de la tabla en la página web, abre una nueva instancia de Excel y pega los datos copiados.",
-  "detailed_steps": [
+  "section_3_2_bpmn_xml_code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<bpmn:definitions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\" xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\" xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" id=\"Definitions_1\" targetNamespace=\"http://bpmn.io/schema/bpmn\">\n  <bpmn:process id=\"GeneratedProcess_1\" isExecutable=\"false\">\n    <bpmn:startEvent id=\"StartEvent_1\" name=\"Inicio\">\n      <bpmn:outgoing>Flow_1</bpmn:outgoing>\n    </bpmn:startEvent>\n    <bpmn:userTask id=\"Task_1\" name=\"Navegar y Buscar Cotizaciones BCRA\">\n      <bpmn:incoming>Flow_1</bpmn:incoming>\n      <bpmn:outgoing>Flow_2</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_2\" name=\"Intentar Descargar Archivo Excel\">\n      <bpmn:incoming>Flow_2</bpmn:incoming>\n      <bpmn:outgoing>Flow_3</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_3\" name=\"Manejar Error Descarga/Apertura\">\n      <bpmn:incoming>Flow_3</bpmn:incoming>\n      <bpmn:outgoing>Flow_4</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_4\" name=\"Copiar Datos de Tabla Web\">\n      <bpmn:incoming>Flow_4</bpmn:incoming>\n      <bpmn:outgoing>Flow_5</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_5\" name=\"Pegar Datos en Excel\">\n      <bpmn:incoming>Flow_5</bpmn:incoming>\n      <bpmn:outgoing>Flow_6</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:endEvent id=\"EndEvent_1\" name=\"Fin\">\n      <bpmn:incoming>Flow_6</bpmn:incoming>\n    </bpmn:endEvent>\n    <bpmn:sequenceFlow id=\"Flow_1\" sourceRef=\"StartEvent_1\" targetRef=\"Task_1\" />\n    <bpmn:sequenceFlow id=\"Flow_2\" sourceRef=\"Task_1\" targetRef=\"Task_2\" />\n    <bpmn:sequenceFlow id=\"Flow_3\" sourceRef=\"Task_2\" targetRef=\"Task_3\" />\n    <bpmn:sequenceFlow id=\"Flow_4\" sourceRef=\"Task_3\" targetRef=\"Task_4\" />\n    <bpmn:sequenceFlow id=\"Flow_5\" sourceRef=\"Task_4\" targetRef=\"Task_5\" />\n    <bpmn:sequenceFlow id=\"Flow_6\" sourceRef=\"Task_5\" targetRef=\"EndEvent_1\" />\n  </bpmn:process>\n  <bpmndi:BPMNDiagram id=\"BPMNDiagram_1\">\n    <bpmndi:BPMNPlane id=\"Plane_1\" bpmnElement=\"GeneratedProcess_1\">\n      <bpmndi:BPMNShape id=\"StartEvent_1_di\" bpmnElement=\"StartEvent_1\">\n        <dc:Bounds x=\"100\" y=\"100\" width=\"36\" height=\"36\" />\n        <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"103\" y=\"143\" width=\"30\" height=\"14\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNShape id=\"Task_1_di\" bpmnElement=\"Task_1\">\n        <dc:Bounds x=\"200\" y=\"78\" width=\"100\" height=\"80\" />\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNShape id=\"Task_2_di\" bpmnElement=\"Task_2\">\n        <dc:Bounds x=\"350\" y=\"78\" width=\"100\" height=\"80\" />\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNShape id=\"Task_3_di\" bpmnElement=\"Task_3\">\n        <dc:Bounds x=\"500\" y=\"78\" width=\"100\" height=\"80\" />\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNShape id=\"Task_4_di\" bpmnElement=\"Task_4\">\n        <dc:Bounds x=\"650\" y=\"78\" width=\"100\" height=\"80\" />\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNShape id=\"Task_5_di\" bpmnElement=\"Task_5\">\n        <dc:Bounds x=\"800\" y=\"78\" width=\"100\" height=\"80\" />\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNShape id=\"EndEvent_1_di\" bpmnElement=\"EndEvent_1\">\n        <dc:Bounds x=\"952\" y=\"100\" width=\"36\" height=\"36\" />\n         <bpmndi:BPMNLabel>\n          <dc:Bounds x=\"958\" y=\"143\" width=\"24\" height=\"14\" />\n        </bpmndi:BPMNLabel>\n      </bpmndi:BPMNShape>\n      <bpmndi:BPMNEdge id=\"Flow_1_di\" bpmnElement=\"Flow_1\">\n        <di:waypoint x=\"136\" y=\"118\" />\n        <di:waypoint x=\"200\" y=\"118\" />\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNEdge id=\"Flow_2_di\" bpmnElement=\"Flow_2\">\n        <di:waypoint x=\"300\" y=\"118\" />\n        <di:waypoint x=\"350\" y=\"118\" />\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNEdge id=\"Flow_3_di\" bpmnElement=\"Flow_3\">\n        <di:waypoint x=\"450\" y=\"118\" />\n        <di:waypoint x=\"500\" y=\"118\" />\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNEdge id=\"Flow_4_di\" bpmnElement=\"Flow_4\">\n        <di:waypoint x=\"600\" y=\"118\" />\n        <di:waypoint x=\"650\" y=\"118\" />\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNEdge id=\"Flow_5_di\" bpmnElement=\"Flow_5\">\n        <di:waypoint x=\"750\" y=\"118\" />\n        <di:waypoint x=\"800\" y=\"118\" />\n      </bpmndi:BPMNEdge>\n      <bpmndi:BPMNEdge id=\"Flow_6_di\" bpmnElement=\"Flow_6\">\n        <di:waypoint x=\"900\" y=\"118\" />\n        <di:waypoint x=\"952\" y=\"118\" />\n      </bpmndi:BPMNEdge>\n    </bpmndi:BPMNPlane>\n  </bpmndi:BPMNDiagram>\n</bpmn:definitions>",
+  "section_3_3_detailed_steps": [
     {
       "step_number": 1,
-      "description": "Iniciar grabación de pantalla.",
-      "timestamp_ms": 0,
+      "description": "Detener grabación en OBS Studio",
+      "timestamp_ms": 2500,
       "application_in_focus": "OBS Studio",
-      "action_type_inferred": "OBS Studio está activo y grabando la pantalla. Se muestra la interfaz principal."
+      "action_type_inferred": "Click en botón 'Detener Grabación'"
     },
     {
       "step_number": 2,
-      "description": "Minimizar/Cerrar OBS Studio y abrir navegador web.",
-      "timestamp_ms": 3000,
-      "application_in_focus": "Escritorio Windows / Navegador Web",
-      "action_type_inferred": "La ventana de OBS se minimiza o cierra, mostrando el escritorio. Se abre una ventana del navegador web (Google Chrome/Edge)."
+      "description": "Abrir navegador Microsoft Edge",
+      "timestamp_ms": 7500,
+      "application_in_focus": "Windows Desktop/Taskbar",
+      "action_type_inferred": "Click en icono de Microsoft Edge en la barra de tareas"
     },
     {
       "step_number": 3,
-      "description": "Buscar 'banco central cotizaciones' en Google.",
-      "timestamp_ms": 9500,
-      "application_in_focus": "Navegador Web (Google)",
-      "action_type_inferred": "Teclea 'banco central cotizaciones' en la barra de búsqueda de Google y ejecuta la búsqueda."
+      "description": "Buscar en Google",
+      "timestamp_ms": 10500,
+      "application_in_focus": "Microsoft Edge",
+      "action_type_inferred": "Escribir 'banco central cotizaciones' en la barra de búsqueda de Google"
     },
     {
       "step_number": 4,
-      "description": "Hacer clic en enlace 'Planilla de Cierre de Cotizaciones' del BCRA.",
-      "timestamp_ms": 11800,
-      "application_in_focus": "Navegador Web (Google Search Results)",
-      "action_type_inferred": "Hace clic en el resultado de búsqueda con el texto 'Planilla de Cierre de Cotizaciones' que apunta a 'https://www.bcra.gob.ar/PublicacionesEstadisticas/Planilla_cierre_de_cotizaciones.asp?...'"
+      "description": "Ejecutar búsqueda",
+      "timestamp_ms": 11000,
+      "application_in_focus": "Microsoft Edge",
+      "action_type_inferred": "Presionar tecla Enter"
     },
     {
       "step_number": 5,
-      "description": "Hacer clic en icono de descarga Excel en la página del BCRA.",
-      "timestamp_ms": 14500,
-      "application_in_focus": "Navegador Web (BCRA)",
-      "action_type_inferred": "Hace clic en el icono pequeño con una 'X' (representando Excel) ubicado sobre la tabla de cotizaciones. El enlace apunta a '.../Planilla_cierre_de_cotizaciones.xlw'."
+      "description": "Acceder a Planilla de Cotizaciones BCRA",
+      "timestamp_ms": 12500,
+      "application_in_focus": "Microsoft Edge",
+      "action_type_inferred": "Click en enlace 'Planilla de Cierre de Cotizaciones' con URL parcial '...bcra.gob.ar/PublicacionesEstadisticas/Planilla_cierre_de_cotizaciones.asp...'"
     },
     {
       "step_number": 6,
-      "description": "Guardar el archivo 'Cotizaciones.xlw'.",
-      "timestamp_ms": 19500,
-      "application_in_focus": "Ventana 'Guardar Como'",
-      "action_type_inferred": "Aparece el diálogo 'Guardar Como'. El nombre de archivo predeterminado es 'Cotizaciones' y el tipo 'Microsoft Excel Workspace (*.xlw)'. Hace clic en el botón 'Guardar'."
+      "description": "Iniciar descarga de Excel",
+      "timestamp_ms": 18500,
+      "application_in_focus": "Microsoft Edge",
+      "action_type_inferred": "Click en icono de descarga con logo de Excel (vinculado a '...planilla_cierre_de_cotizaciones.aspx?moneda=2')"
     },
     {
       "step_number": 7,
-      "description": "Hacer clic en el archivo descargado para abrirlo.",
-      "timestamp_ms": 23000,
-      "application_in_focus": "Navegador Web (Descargas)",
-      "action_type_inferred": "El archivo 'Cotizaciones.xlw' aparece como descargado. Hace clic sobre él en la barra/lista de descargas del navegador."
+      "description": "Guardar archivo descargado",
+      "timestamp_ms": 20500,
+      "application_in_focus": "Microsoft Edge",
+      "action_type_inferred": "Click en botón 'Guardar' en el diálogo de descarga (nombre de archivo: 'Cotizaciones.xlsx')"
     },
     {
       "step_number": 8,
-      "description": "Intentar abrir archivo en Excel y cerrar mensaje de error.",
-      "timestamp_ms": 26000,
-      "application_in_focus": "Microsoft Excel",
-      "action_type_inferred": "Microsoft Excel se inicia. Aparece un cuadro de diálogo pequeño titulado 'Microsoft Excel' (probablemente un error o advertencia). El usuario lo cierra (quizás haciendo clic en Aceptar o la X)."
+      "description": "Abrir menú de descargas del navegador",
+      "timestamp_ms": 24500,
+      "application_in_focus": "Microsoft Edge",
+      "action_type_inferred": "Click en icono de Descargas (flecha hacia abajo) en la barra de herramientas de Edge"
     },
     {
       "step_number": 9,
-      "description": "Cerrar ventana de Excel vacía/con error.",
-      "timestamp_ms": 31500,
-      "application_in_focus": "Microsoft Excel",
-      "action_type_inferred": "Cierra la ventana principal de Microsoft Excel haciendo clic en el botón 'X'."
+      "description": "Abrir archivo Excel descargado",
+      "timestamp_ms": 25800,
+      "application_in_focus": "Microsoft Edge",
+      "action_type_inferred": "Click en el archivo 'Cotizaciones.xlsx' en el panel de descargas"
     },
     {
       "step_number": 10,
-      "description": "Seleccionar datos de la tabla en la página web.",
-      "timestamp_ms": 35500,
-      "application_in_focus": "Navegador Web (BCRA)",
-      "action_type_inferred": "Selecciona el rango de celdas en la tabla HTML, desde la fila '10-04-2025' hasta '31-03-2025', incluyendo las columnas 'Fecha', 'Comprador' y 'Vendedor'."
+      "description": "Confirmar/Cerrar diálogo de error Excel",
+      "timestamp_ms": 30000,
+      "application_in_focus": "Microsoft Excel",
+      "action_type_inferred": "Click implícito o cierre automático del diálogo de error titulado 'Microsoft Excel'"
     },
     {
       "step_number": 11,
-      "description": "Copiar datos seleccionados (Ctrl+C).",
-      "timestamp_ms": 40000,
-      "application_in_focus": "Navegador Web (BCRA)",
-      "action_type_inferred": "Presiona la combinación de teclas Ctrl+C para copiar los datos seleccionados al portapapeles."
+      "description": "Cerrar ventana de Excel (con error)",
+      "timestamp_ms": 32500,
+      "application_in_focus": "Microsoft Excel",
+      "action_type_inferred": "Click en el botón 'Cerrar' (X) de la ventana de Microsoft Excel"
     },
     {
       "step_number": 12,
-      "description": "Abrir nueva instancia de Microsoft Excel.",
-      "timestamp_ms": 41000,
-      "application_in_focus": "Microsoft Excel",
-      "action_type_inferred": "Abre Microsoft Excel y selecciona/se abre un 'Blank workbook' (Libro en blanco)."
+      "description": "Seleccionar datos en tabla web",
+      "timestamp_ms": 38000,
+      "application_in_focus": "Microsoft Edge",
+      "action_type_inferred": "Seleccionar con el mouse el rango de celdas en la tabla HTML, abarcando las columnas 'Fecha', 'Comprador', 'Vendedor' desde la fila '10-04-2025' hasta la fila '31-03-2025'"
     },
     {
       "step_number": 13,
-      "description": "Pegar datos en la hoja de cálculo (Ctrl+V).",
-      "timestamp_ms": 44000,
-      "application_in_focus": "Microsoft Excel",
-      "action_type_inferred": "Pega los datos del portapapeles en la hoja de cálculo, comenzando en la celda A1. Los datos de Fecha, Comprador y Vendedor aparecen en las columnas A, B y C."
+      "description": "Copiar datos seleccionados",
+      "timestamp_ms": 40000,
+      "application_in_focus": "Microsoft Edge",
+      "action_type_inferred": "Presionar combinación de teclas Ctrl+C"
     },
     {
       "step_number": 14,
-      "description": "Finalizar el proceso (grabación continúa/termina).",
-      "timestamp_ms": 49000,
-      "application_in_focus": "Microsoft Excel / OBS Studio",
-      "action_type_inferred": "Los datos están pegados en Excel. El foco puede volver a OBS o la grabación termina aquí."
-    }
-  ],
-  "potential_exceptions_suggestions": [
-    {
-      "exception_id": "E1",
-      "description": "Error al descargar el archivo .xlw",
-      "potential_trigger": "Problema de conexión a internet, URL del archivo cambiada en el servidor del BCRA, archivo no disponible temporalmente.",
-      "suggested_resolution": "Verificar la conexión a internet, reintentar la descarga, verificar si la URL o la página del BCRA ha cambiado."
+      "description": "Abrir nueva instancia de Excel",
+      "timestamp_ms": 41500,
+      "application_in_focus": "Windows Desktop/Taskbar",
+      "action_type_inferred": "Click en icono de Microsoft Excel para abrir un nuevo libro de trabajo en blanco ('Book1')"
     },
     {
-      "exception_id": "E2",
-      "description": "Error al abrir el archivo .xlw en Excel",
-      "potential_trigger": "Formato de archivo .xlw incompatible con la versión de Excel, archivo corrupto durante la descarga, falta de permisos.",
-      "suggested_resolution": "Intentar abrir con otra versión de Excel, descargar el archivo nuevamente, verificar compatibilidad de formato .xlw, usar el método alternativo de copiar/pegar (como se hizo en el video)."
+      "step_number": 15,
+      "description": "Seleccionar celda destino en Excel",
+      "timestamp_ms": 43000,
+      "application_in_focus": "Microsoft Excel",
+      "action_type_inferred": "Click en la celda 'A1' de la hoja activa 'Sheet1'"
     },
     {
-      "exception_id": "E3",
-      "description": "La estructura de la tabla en la página web ha cambiado",
-      "potential_trigger": "Actualización del sitio web del BCRA, cambio en el formato de presentación de datos.",
-      "suggested_resolution": "Inspeccionar la nueva estructura HTML de la página, ajustar el método de selección y copia de datos, o buscar una fuente de datos alternativa/API si está disponible."
+      "step_number": 16,
+      "description": "Pegar datos en Excel",
+      "timestamp_ms": 44500,
+      "application_in_focus": "Microsoft Excel",
+      "action_type_inferred": "Presionar combinación de teclas Ctrl+V. Datos pegados en el rango 'A1:C8' de la hoja 'Sheet1'."
     }
   ],
-  "bpmn_xml_code": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<bpmn:definitions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\" xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\" xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\" targetNamespace=\"http://bpmn.io/schema/bpmn\" exporter=\"IA Generated\" exporterVersion=\"0.1\">\n  <bpmn:process id=\"GeneratedProcess_1\" isExecutable=\"false\">\n    <bpmn:laneSet id=\"LaneSet_1\">\n      <bpmn:lane id=\"Lane_User\" name=\"Usuario\">\n        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>Task_2</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>Task_3</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>Task_4</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>Task_5</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>Task_6</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>Task_8</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>Task_10</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>Task_11</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>Task_12</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>Task_13</bpmn:flowNodeRef>\n        <bpmn:flowNodeRef>EndEvent_1</bpmn:flowNodeRef>\n      </bpmn:lane>\n    </bpmn:laneSet>\n    <bpmn:startEvent id=\"StartEvent_1\" name=\"Inicio Proceso\">\n      <bpmn:outgoing>Flow_0</bpmn:outgoing>\n    </bpmn:startEvent>\n    <bpmn:userTask id=\"Task_2\" name=\"Abrir Navegador Web\">\n      <bpmn:incoming>Flow_0</bpmn:incoming>\n      <bpmn:outgoing>Flow_1</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_3\" name=\"Buscar en Google\">\n      <bpmn:incoming>Flow_1</bpmn:incoming>\n      <bpmn:outgoing>Flow_2</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_4\" name=\"Navegar a BCRA Cotizaciones\">\n      <bpmn:incoming>Flow_2</bpmn:incoming>\n      <bpmn:outgoing>Flow_3</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_5\" name=\"Descargar Archivo Excel (.xlw)\">\n      <bpmn:incoming>Flow_3</bpmn:incoming>\n      <bpmn:outgoing>Flow_4</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_6\" name=\"Intentar Abrir Archivo\">\n      <bpmn:incoming>Flow_4</bpmn:incoming>\n      <bpmn:outgoing>Flow_5</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_8\" name=\"Cerrar Excel (Error)\">\n      <bpmn:incoming>Flow_5</bpmn:incoming>\n      <bpmn:outgoing>Flow_6</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_10\" name=\"Seleccionar Datos en Web\">\n      <bpmn:incoming>Flow_6</bpmn:incoming>\n      <bpmn:outgoing>Flow_7</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_11\" name=\"Copiar Datos (Ctrl+C)\">\n      <bpmn:incoming>Flow_7</bpmn:incoming>\n      <bpmn:outgoing>Flow_8</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_12\" name=\"Abrir Nuevo Excel\">\n      <bpmn:incoming>Flow_8</bpmn:incoming>\n      <bpmn:outgoing>Flow_9</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:userTask id=\"Task_13\" name=\"Pegar Datos (Ctrl+V)\">\n      <bpmn:incoming>Flow_9</bpmn:incoming>\n      <bpmn:outgoing>Flow_10</bpmn:outgoing>\n    </bpmn:userTask>\n    <bpmn:endEvent id=\"EndEvent_1\" name=\"Fin Proceso\">\n      <bpmn:incoming>Flow_10</bpmn:incoming>\n    </bpmn:endEvent>\n    <bpmn:sequenceFlow id=\"Flow_0\" sourceRef=\"StartEvent_1\" targetRef=\"Task_2\" />\n    <bpmn:sequenceFlow id=\"Flow_1\" sourceRef=\"Task_2\" targetRef=\"Task_3\" />\n    <bpmn:sequenceFlow id=\"Flow_2\" sourceRef=\"Task_3\" targetRef=\"Task_4\" />\n    <bpmn:sequenceFlow id=\"Flow_3\" sourceRef=\"Task_4\" targetRef=\"Task_5\" />\n    <bpmn:sequenceFlow id=\"Flow_4\" sourceRef=\"Task_5\" targetRef=\"Task_6\" />\n    <bpmn:sequenceFlow id=\"Flow_5\" sourceRef=\"Task_6\" targetRef=\"Task_8\" />\n    <bpmn:sequenceFlow id=\"Flow_6\" sourceRef=\"Task_8\" targetRef=\"Task_10\" />\n    <bpmn:sequenceFlow id=\"Flow_7\" sourceRef=\"Task_10\" targetRef=\"Task_11\" />\n    <bpmn:sequenceFlow id=\"Flow_8\" sourceRef=\"Task_11\" targetRef=\"Task_12\" />\n    <bpmn:sequenceFlow id=\"Flow_9\" sourceRef=\"Task_12\" targetRef=\"Task_13\" />\n    <bpmn:sequenceFlow id=\"Flow_10\" sourceRef=\"Task_13\" targetRef=\"EndEvent_1\" />\n </bpmn:process>\n <bpmn:collaboration id=\"Collaboration_1\">\n    <bpmn:participant id=\"Participant_User\" name=\"Usuario\" processRef=\"GeneratedProcess_1\" />\n </bpmn:collaboration>\n <bpmndi:BPMNDiagram id=\"BPMNDiagram_1\">\n    <bpmndi:BPMNPlane id=\"Plane_1\" bpmnElement=\"Collaboration_1\">\n      <!-- Diagram elements without coordinates -->\n    </bpmndi:BPMNPlane>\n </bpmndi:BPMNDiagram>\n</bpmn:definitions>\n"
+  "section_3_4_inputs_suggestion": "URL de la página de cotizaciones del BCRA (implícita a través de búsqueda y clic). Interacción del usuario para la selección de datos en la tabla web.",
+  "section_3_5_outputs_suggestion": "Datos de cotizaciones (Fecha, Comprador, Vendedor) pegados en una hoja de cálculo de Microsoft Excel (Sheet1, Rango A1:C8).",
+  "section_3_6_rules_suggestion": "Si la descarga del archivo Excel falla o el archivo no se abre correctamente, proceder a copiar los datos manualmente desde la tabla web.",
+  "section_4_1_tobe_summary_suggestion": "Un robot de software podría navegar automáticamente al sitio del BCRA, intentar descargar el archivo Excel, y si falla, extraer los datos directamente de la tabla web (web scraping). Posteriormente, el robot pegaría los datos extraídos en una hoja de Excel predefinida o nueva.",
+  "section_4_3_interaction_suggestion": "Notificación al usuario si el sitio web del BCRA cambia su estructura o si los datos no se encuentran. Posible intervención manual si ocurre un error inesperado no contemplado (ej., captcha, error de servidor irrecuperable). Validación opcional de los datos pegados por un usuario.",
+  "section_5_exceptions_suggestions": [
+    {
+      "exception_type": "Aplicación",
+      "description": "Error al abrir el archivo Excel descargado.",
+      "potential_trigger": "Archivo corrupto, incompatibilidad de formato/versión, error interno de Excel.",
+      "suggested_handling_idea": "Implementar lógica de web scraping como alternativa principal o secundaria. Registrar el error."
+    },
+    {
+      "exception_type": "Aplicación",
+      "description": "Cambio en la estructura HTML de la página web del BCRA.",
+      "potential_trigger": "Actualización del sitio web por parte del BCRA.",
+      "suggested_handling_idea": "Utilizar selectores robustos (ej., IDs si existen, selectores CSS/XPath menos frágiles). Implementar monitoreo y alertas. Requerir ajuste del robot."
+    },
+    {
+      "exception_type": "Aplicación",
+      "description": "El enlace de descarga del archivo Excel no funciona o el archivo no está disponible.",
+      "potential_trigger": "Enlace roto, archivo eliminado temporal o permanentemente.",
+      "suggested_handling_idea": "Verificar la existencia del enlace/archivo antes de intentar descargar. Proceder con web scraping si la descarga falla. Notificar error."
+    },
+    {
+      "exception_type": "Negocio",
+      "description": "Formato de datos inconsistente en la tabla (ej., fechas, números).",
+      "potential_trigger": "Cambios en la forma en que BCRA presenta los datos.",
+      "suggested_handling_idea": "Implementar validaciones de formato después de la extracción. Intentar normalizar los datos o registrar la fila como excepción para revisión manual."
+    }
+  ],
+  "section_6_2_dependencies_suggestion": "Acceso a Internet estable. Navegador web Microsoft Edge instalado y funcional. Microsoft Excel instalado y funcional. Acceso permitido al sitio web del BCRA (bcra.gob.ar).",
+  "section_6_4_reporting_suggestion": "Registrar inicio y fin de la ejecución del proceso. Registrar éxito o fracaso de la obtención de datos. Indicar método utilizado (descarga o copia manual/scraping). Registrar cualquier error encontrado (ej., error al abrir archivo, elemento no encontrado). Opcionalmente, registrar el número de filas de cotizaciones obtenidas."
 }
