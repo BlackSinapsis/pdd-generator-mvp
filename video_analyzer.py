@@ -117,8 +117,8 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
 **Tarea Principal:** Eres un asistente experto en análisis de procesos de negocio y documentación técnica (PDD). Analiza exhaustivamente el video proporcionado que muestra un proceso en pantalla. Tu objetivo es extraer información detallada y generar un borrador inicial para la mayoría de las secciones de un PDD profesional, estructurando toda la salida en un **único objeto JSON válido**.
 
 **Instrucciones Generales:**
-1.  Observa CADA acción visual y cambio significativo. ¡Presta atención a los detalles más pequeños!
-2.  Infiere el contexto y propósito basándote ÚNICAMENTE en lo visible. No hagas suposiciones.
+1.  Observa CADA acción visual y cambio significativo.
+2.  Infiere el contexto y propósito basándote ÚNICAMENTE en lo visible.
 3.  Genera la salida **estrictamente** en el formato JSON especificado abajo, sin texto introductorio, comentarios fuera del JSON, ni marcado como ```json ... ```. La respuesta DEBE ser solo el objeto JSON.
 4.  Para las secciones de texto narrativo (marcadas como `_text` o `_suggestion`), genera un borrador conciso y relevante basado en el video. Sé consciente de que este texto requerirá revisión humana. Si no puedes inferir contenido útil para una sección, devuelve `null` para esa clave específica.
 
@@ -145,6 +145,7 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
       "timestamp_ms": "integer",
       "application_in_focus": "string",
       "action_type_inferred": "string"
+      // Coordenadas X e Y eliminadas
     }
   ],
   "section_3_4_inputs_suggestion": "string | null",
@@ -212,12 +213,11 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
         * Incluye el texto EXACTO de botones, menús, enlaces, URLs visibles, texto tecleado, nombres de archivo.
         * **¡¡ATENCIÓN ESPECIALÍSIMA A HOJAS DE CÁLCULO (Excel, Sheets)!!**
             * Si se hace clic en una celda, se escribe en ella, o **se pegan datos**:
-                * **OBSERVA DETENIDAMENTE:** ¿Qué celda está **SELECCIONADA** o en **FOCO** *justo antes* de la acción de escritura o pegado?
-                * Identifica la **REFERENCIA EXACTA de esa celda seleccionada (ej: 'B2', 'C5', 'A1')**. ¡NO ASUMAS 'A1' a menos que sea explícitamente visible como la celda activa!
+                * Identifica la **REFERENCIA EXACTA de la celda (ej: 'B2', 'C5', 'A1')** visible donde ocurre o comienza la acción. ¡Sé muy preciso!
                 * Identifica el **NOMBRE DE LA HOJA (Worksheet) activa** (ej: 'Sheet1', 'Hoja1', 'Datos') si es visible.
                 * Identifica el **NOMBRE DEL ENCABEZADO DE COLUMNA** directamente sobre la celda de acción, si es visible (ej: "Columna 'Fecha'", "Encabezado 'Vendedor'").
             * Si se selecciona un rango, indica el rango exacto (ej: "Seleccionar rango 'A1:C10' en hoja 'Sheet1'").
-        * Sé lo más específico posible sobre el *lugar* y *contexto* de la interacción. Ejemplo detallado: "Click en celda **'B2'**. Pegar datos (Ctrl+V) en la hoja **'Hoja1'**, comenzando en la celda seleccionada **'B2'** bajo la columna **'Fecha'**."
+        * Sé lo más específico posible sobre el *lugar* y *contexto* de la interacción. Ejemplo detallado: "Pegar datos (Ctrl+V) en la hoja **'Hoja1'**, comenzando **específicamente en la celda 'B2'** bajo la columna **'Fecha'**."
 * **`section_3_4_inputs_suggestion`**: Describe brevemente los inputs inferidos (ej: "Sitio web X", "Archivo Y descargado"). *Especulativo.*
 * **`section_3_5_outputs_suggestion`**: Describe brevemente los outputs inferidos (ej: "Datos pegados en Excel", "Archivo Z guardado"). *Especulativo.*
 * **`section_3_6_rules_suggestion`**: Intenta inferir reglas de negocio MUY simples si son obvias en el flujo (ej: "Si el archivo falla, copiar datos manualmente"). *Muy especulativo.*
