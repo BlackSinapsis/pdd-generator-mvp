@@ -113,15 +113,16 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
         return None
 
     # Define el prompt detallado
-    prompt = """Eres un asistente experto en análisis de procesos de negocio y documentación técnica, especializado en crear Documentos de Descripción de Procesos (PDD) a partir de grabaciones de pantalla. Analiza exhaustivamente el siguiente video que muestra un proceso realizado en una computadora. Tu objetivo es extraer toda la información relevante y estructurarla en un único objeto JSON que sirva como base para un PDD completo.
+    prompt = """
+**Tarea Principal:** Eres un asistente experto en análisis de procesos de negocio y documentación técnica (PDD). Analiza exhaustivamente el video proporcionado que muestra un proceso en pantalla. Tu objetivo es extraer información detallada y generar un borrador inicial para la mayoría de las secciones de un PDD profesional, estructurando toda la salida en un **único objeto JSON válido**.
 
 **Instrucciones Generales:**
-1.  Observa atentamente CADA acción visual y cambio significativo en pantalla.
-2.  Infiere el contexto y propósito basándote ÚNICAMENTE en lo visible y las acciones realizadas. Evita suposiciones externas.
-3.  Genera la salida **estrictamente** en el formato JSON especificado al final, sin ningún texto introductorio, comentarios, ni marcado como ```json ... ```. La respuesta DEBE ser solo el objeto JSON.
+1.  Observa CADA acción visual y cambio significativo. ¡Presta atención a los detalles más pequeños!
+2.  Infiere el contexto y propósito basándote ÚNICAMENTE en lo visible. No hagas suposiciones.
+3.  Genera la salida **estrictamente** en el formato JSON especificado abajo, sin texto introductorio, comentarios fuera del JSON, ni marcado como ```json ... ```. La respuesta DEBE ser solo el objeto JSON.
+4.  Para las secciones de texto narrativo (marcadas como `_text` o `_suggestion`), genera un borrador conciso y relevante basado en el video. Sé consciente de que este texto requerirá revisión humana. Si no puedes inferir contenido útil para una sección, devuelve `null` para esa clave específica.
 
-**Estructura JSON de Salida Requerida:**
-La salida debe ser un objeto JSON con las siguientes claves principales:
+**Estructura JSON de Salida Requerida (v0.3 - Sin Coordenadas):**
 
 ```json
 {
@@ -129,88 +130,112 @@ La salida debe ser un objeto JSON con las siguientes claves principales:
     "process_name_suggestion": "string | null",
     "potential_acronym": "string | null"
   },
-  "introduction_text": "string",
-  "business_context_text": "string",
-  "user_roles_inferred": ["string"],
-  "process_overview_text": "string",
-  "detailed_steps": [
+  "section_1_1_purpose_text": "string | null",
+  "section_1_2_objectives_text": "string | null",
+  "section_1_3_1_scope_in_suggestion": "string | null",
+  "section_1_3_2_scope_out_suggestion": "string | null",
+  "section_2_0_context_text": "string | null",
+  "section_3_1_as_is_summary_text": "string | null",
+  "section_3_1_user_roles_inferred": ["string"],
+  "section_3_2_bpmn_xml_code": "string | null",
+  "section_3_3_detailed_steps": [
     {
       "step_number": "integer",
-      "description": "string",            // RESUMEN de la acción
+      "description": "string",
       "timestamp_ms": "integer",
       "application_in_focus": "string",
-      "action_type_inferred": "string"    // Descripción ULTRA DETALLADA
+      "action_type_inferred": "string"
     }
   ],
-  "potential_exceptions_suggestions": [
+  "section_3_4_inputs_suggestion": "string | null",
+  "section_3_5_outputs_suggestion": "string | null",
+  "section_3_6_rules_suggestion": "string | null",
+  "section_4_1_tobe_summary_suggestion": "string | null",
+  "section_4_3_interaction_suggestion": "string | null",
+  "section_5_exceptions_suggestions": [
     {
-      "exception_id": "string",
+      "exception_type": "string", // "Negocio" o "Aplicación"
       "description": "string",
       "potential_trigger": "string",
-      "suggested_resolution": "string"
+      "suggested_handling_idea": "string"
     }
   ],
-  "bpmn_xml_code": "string" // String conteniendo el CÓDIGO XML BPMN 2.0 SIMPLE pero VÁLIDO
+  "section_6_2_dependencies_suggestion": "string | null",
+  "section_6_4_reporting_suggestion": "string | null"
 }
-Use code with caution.
-Python
-Detalle de Secciones a Generar:
-pdd_metadata_inferred:
-process_name_suggestion: Infiere un nombre corto (ej: "Descarga Cotizaciones BCRA"). Si no, null.
-potential_acronym: Infiere acrónimo. Si no, null.
-introduction_text: Genera 1-2 párrafos (propósito/alcance inferido del video). Ejemplo: "Este documento describe el proceso observado para obtener y formatear datos de cotizaciones del BCRA usando navegador y Excel..."
-business_context_text: Genera 1-2 párrafos (propósito de negocio inferido). Ejemplo: "El proceso parece orientado a la recopilación de datos financieros para análisis..."
-user_roles_inferred: Lista roles por aplicación (ej: "Usuario Navegador Web", "Usuario Microsoft Excel").
-process_overview_text: Resumen alto nivel (3-5 frases) de pasos clave observados.
-detailed_steps: Lista de objetos por paso:
-step_number: Secuencial (1, 2, 3...).
-description: Resumen corto de la acción (ej: "Abrir nueva instancia de Excel").
-timestamp_ms: Momento clave (entero).
-application_in_focus: Aplicación principal (ej: "Microsoft Excel"). Si no clara, "Desconocida".
-action_type_inferred:**Descripción ULTRA DETALLADA, enfocada en la interacción precisa con la UI.**
-        *   Incluye el texto EXACTO de botones, menús, enlaces, URLs visibles, texto tecleado, nombres de archivo.
-        *   **¡ATENCIÓN ESPECIAL A HOJAS DE CÁLCULO (Excel, Sheets)!:**
-            *   Si se hace clic en una celda, se escribe en ella, o **se pegan datos**, identifica la **REFERENCIA EXACTA de la celda (ej: 'B2', 'C5', 'A1')** visible donde comienza la acción.
-            *   Si es posible inferir el **nombre de la columna** bajo la cual se pega o edita (basado en encabezados visibles), menciónalo (ej: "Pegar datos en celda 'B2' bajo la columna 'Fecha'").
-            *   Si se selecciona un rango, indica el rango (ej: "Seleccionar rango 'A1:C10'").
-        *   Sé lo más específico posible sobre el *lugar* de la interacción. Ejemplo detallado: "Pegar datos (Ctrl+V) en la hoja 'Sheet1', comenzando **específicamente en la celda 'B2'**."
-potential_exceptions_suggestions: Sugiere 2-3 excepciones comunes (objetos con id, desc, trigger, resolution).
-bpmn_xml_code: ¡Genera código XML BPMN 2.0 VÁLIDO y SIMPLIFICADO!
-Analiza la secuencia de detailed_steps.
-DEBE incluir el encabezado XML (<?xml...?>) y <bpmn:definitions ...> con namespaces y un targetNamespace.
-DEBE incluir un <bpmn:process id="GeneratedProcess_1">.
-NO INCLUIR: Collaboration, Participant, LaneSet, Lanes.
-DEBE incluir un <bpmn:startEvent id="StartEvent_1">.
-DEBE incluir una secuencia de <bpmn:userTask id="Task_{step_number}" name="{description}">. Usa el campo description (el resumen corto) del paso como name. Asegura IDs únicos (Task_1, Task_2, etc.).
-DEBE incluir un <bpmn:endEvent id="EndEvent_1">.
-DEBE incluir los <bpmn:sequenceFlow id="Flow_{id_unico}" sourceRef="..." targetRef="..."> conectando secuencialmente Start -> Task_1 -> Task_2 -> ... -> EndEvent. Asegura IDs únicos y referencias correctas.
-DEBE incluir la sección <bpmndi:BPMNDiagram> con un <bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1"> (referenciando el ID del PROCESO).
-DEBE incluir dentro del <bpmndi:BPMNPlane>, las etiquetas <bpmndi:BPMNShape> para CADA StartEvent, UserTask y EndEvent, y <bpmndi:BPMNEdge> para CADA SequenceFlow. Usa los IDs correctos en el atributo bpmnElement. Puedes usar coordenadas y tamaños FIJOS/PLACEHOLDER (ver ejemplo abajo), no necesitas calcularlos.
-Asegúrate de que TODO el XML sea perfectamente formado y todas las etiquetas estén cerradas correctamente.
-Ejemplo MÍNIMO de la estructura DI requerida dentro de BPMNPlane (usa IDs y coordenadas similares):
-<bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1">
-  <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
-    <dc:Bounds x="100" y="100" width="36" height="36" />
-  </bpmndi:BPMNShape>
-  <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1"> <!-- Asegúrate que bpmnElement coincida con el ID de la tarea -->
-    <dc:Bounds x="200" y="80" width="100" height="80" />
-  </bpmndi:BPMNShape>
-  <bpmndi:BPMNEdge id="Flow_0_di" bpmnElement="Flow_0"> <!-- Asegúrate que bpmnElement coincida con el ID del flow -->
-    <di:waypoint x="136" y="118" /> <!-- Punto de salida del start event -->
-    <di:waypoint x="200" y="118" /> <!-- Punto de entrada de la task -->
-  </bpmndi:BPMNEdge>
-  <!-- Repetir Shape y Edge para cada Task y Flow -->
-  <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-    <dc:Bounds x="500" y="100" width="36" height="36" />
-  </bpmndi:BPMNShape>
-</bpmndi:BPMNPlane>
-Use code with caution.
-Xml
-¡IMPORTANTE! Prioriza obtener un JSON válido y la precisión de detailed_steps. El BPMN debe ser estructuralmente correcto y simple.
+```
+
+**Detalle de Secciones a Generar (Instrucciones Específicas):**
+
+* **`pdd_metadata_inferred`**:
+    * `process_name_suggestion`: Infiere nombre corto y descriptivo.
+    * `potential_acronym`: Infiere acrónimo si aplica.
+* **`section_1_1_purpose_text`**: Genera 1-2 frases sobre el propósito inferido de documentar este proceso.
+* **`section_1_2_objectives_text`**: Genera 1-2 frases sugiriendo posibles objetivos de negocio que la automatización podría abordar (ej: "Reducir tiempo manual", "Minimizar errores de copia"). *Muy especulativo.*
+* **`section_1_3_1_scope_in_suggestion`**: Genera una lista o frases cortas de las tareas principales observadas que *parecen* ser el núcleo del proceso a automatizar. *Muy especulativo.*
+* **`section_1_3_2_scope_out_suggestion`**: Genera una lista o frases cortas de tareas observadas que *podrían* quedar fuera (ej: login, preparación inicial, pasos muy complejos o ambiguos). *Muy especulativo.*
+* **`section_2_0_context_text`**: Genera 1-2 párrafos describiendo el contexto funcional inferido (ej: "Parece un proceso del área financiera...", "Involucra el uso de navegador y hoja de cálculo...").
+* **`section_3_1_as_is_summary_text`**: Genera un resumen de 3-5 frases del flujo principal observado de principio a fin.
+* **`section_3_1_user_roles_inferred`**: Lista los roles inferidos basados en las aplicaciones usadas (ej: "Usuario Navegador Web", "Usuario Microsoft Excel").
+* **`section_3_2_bpmn_xml_code`**: **¡Genera código XML BPMN 2.0 VÁLIDO y SIMPLIFICADO!**
+    * Analiza la secuencia de `detailed_steps`.
+    * **DEBE** incluir el encabezado XML (`<?xml...?>`) y `<bpmn:definitions ...>` con namespaces y un targetNamespace.
+    * **DEBE** incluir un `<bpmn:process id="GeneratedProcess_1">`.
+    * **NO INCLUIR:** Collaboration, Participant, LaneSet, Lanes.
+    * **DEBE** incluir un `<bpmn:startEvent id="StartEvent_1">`.
+    * **DEBE** incluir una secuencia de `<bpmn:userTask id="Task_{step_number}" name="{description}">`. Usa el campo `description` (el resumen corto) del paso como `name`. Asegura IDs únicos (Task_1, Task_2, etc.).
+    * **DEBE** incluir un `<bpmn:endEvent id="EndEvent_1">`.
+    * **DEBE** incluir los `<bpmn:sequenceFlow id="Flow_{id_unico}" sourceRef="..." targetRef="...">` conectando secuencialmente Start -> Task_1 -> Task_2 -> ... -> EndEvent. Asegura IDs únicos y referencias correctas.
+    * **DEBE** incluir la sección `<bpmndi:BPMNDiagram>` con un `<bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1">` (referenciando el ID del PROCESO).
+    * **DEBE** incluir dentro del `<bpmndi:BPMNPlane>`, las etiquetas `<bpmndi:BPMNShape>` para CADA StartEvent, UserTask y EndEvent, y `<bpmndi:BPMNEdge>` para CADA SequenceFlow. Usa los IDs correctos en el atributo `bpmnElement`. Puedes usar coordenadas y tamaños FIJOS/PLACEHOLDER (ver ejemplo abajo), no necesitas calcularlos.
+    * Asegúrate de que TODO el XML sea perfectamente formado y todas las etiquetas estén cerradas correctamente.
+    * Ejemplo MÍNIMO de la estructura DI requerida dentro de BPMNPlane (usa IDs y coordenadas similares):
+        ```xml
+        <bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1">
+          <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+            <dc:Bounds x="100" y="100" width="36" height="36" />
+          </bpmndi:BPMNShape>
+          <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1"> <dc:Bounds x="200" y="80" width="100" height="80" />
+          </bpmndi:BPMNShape>
+          <bpmndi:BPMNEdge id="Flow_0_di" bpmnElement="Flow_0"> <di:waypoint x="136" y="118" /> <di:waypoint x="200" y="118" /> </bpmndi:BPMNEdge>
+          <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+            <dc:Bounds x="500" y="100" width="36" height="36" />
+          </bpmndi:BPMNShape>
+        </bpmndi:BPMNPlane>
+        ```
+* **`section_3_3_detailed_steps`**: Lista de objetos por paso:
+    * `step_number`: Secuencial (1, 2, 3...).
+    * `description`: **REFINADO:** Resumen conciso y **orientado a la acción** (Prioriza verbo claro: "Abrir X", "Hacer clic Y", "Ingresar Z").
+    * `timestamp_ms`: Momento clave (entero, lo más preciso posible).
+    * `application_in_focus`: Aplicación principal (ej: "Microsoft Excel", "Google Chrome"). Si no clara, "Desconocida".
+    * `action_type_inferred`: Descripción **ULTRA DETALLADA** de la interacción UI.
+        * Incluye el texto EXACTO de botones, menús, enlaces, URLs visibles, texto tecleado, nombres de archivo.
+        * **¡¡ATENCIÓN ESPECIALÍSIMA A HOJAS DE CÁLCULO (Excel, Sheets)!!**
+            * Si se hace clic en una celda, se escribe en ella, o **se pegan datos**:
+                * **OBSERVA DETENIDAMENTE:** ¿Qué celda está **SELECCIONADA** o en **FOCO** *justo antes* de la acción de escritura o pegado?
+                * Identifica la **REFERENCIA EXACTA de esa celda seleccionada (ej: 'B2', 'C5', 'A1')**. ¡NO ASUMAS 'A1' a menos que sea explícitamente visible como la celda activa!
+                * Identifica el **NOMBRE DE LA HOJA (Worksheet) activa** (ej: 'Sheet1', 'Hoja1', 'Datos') si es visible.
+                * Identifica el **NOMBRE DEL ENCABEZADO DE COLUMNA** directamente sobre la celda de acción, si es visible (ej: "Columna 'Fecha'", "Encabezado 'Vendedor'").
+            * Si se selecciona un rango, indica el rango exacto (ej: "Seleccionar rango 'A1:C10' en hoja 'Sheet1'").
+        * Sé lo más específico posible sobre el *lugar* y *contexto* de la interacción. Ejemplo detallado: "Click en celda **'B2'**. Pegar datos (Ctrl+V) en la hoja **'Hoja1'**, comenzando en la celda seleccionada **'B2'** bajo la columna **'Fecha'**."
+* **`section_3_4_inputs_suggestion`**: Describe brevemente los inputs inferidos (ej: "Sitio web X", "Archivo Y descargado"). *Especulativo.*
+* **`section_3_5_outputs_suggestion`**: Describe brevemente los outputs inferidos (ej: "Datos pegados en Excel", "Archivo Z guardado"). *Especulativo.*
+* **`section_3_6_rules_suggestion`**: Intenta inferir reglas de negocio MUY simples si son obvias en el flujo (ej: "Si el archivo falla, copiar datos manualmente"). *Muy especulativo.*
+* **`section_4_1_tobe_summary_suggestion`**: Genera 1-2 frases sugiriendo cómo podría ser el proceso automatizado (ej: "El robot navegará, descargará/copiará datos y los pegará automáticamente..."). *Muy especulativo.*
+* **`section_4_3_interaction_suggestion`**: Sugiere posibles puntos de interacción humana basados en el flujo As-Is (ej: "Validación manual de datos", "Manejo de errores no esperados"). *Muy especulativo.*
+* **`section_5_exceptions_suggestions`**: Lista 2-4 sugerencias de excepciones/errores comunes:
+    * `exception_type`: "Negocio" o "Aplicación".
+    * `description`: Descripción del problema potencial.
+    * `potential_trigger`: Qué podría causarlo.
+    * `suggested_handling_idea`: Idea breve de manejo.
+* **`section_6_2_dependencies_suggestion`**: Intenta listar dependencias obvias (ej: "Acceso a internet", "Aplicación X instalada"). *Especulativo.*
+* **`section_6_4_reporting_suggestion`**: Sugiere logs básicos (ej: "Registrar inicio/fin", "Registrar error"). *Especulativo.*
+
+**¡IMPORTANTE!** Prioriza la validez del JSON y la precisión/detalle de `section_3_3_detailed_steps`. **La precisión en las interacciones con hojas de cálculo es CRÍTICA.** La calidad del texto narrativo generado es secundaria y requerirá revisión humana intensiva. El BPMN debe ser estructuralmente correcto y simple.
 """
     # Configuración de generación
     generation_config = {
-        "temperature": 1,
+        "temperature": 0.5,
         "top_p": 0.95,
         "top_k": 40,
         "max_output_tokens": 20000,
