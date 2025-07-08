@@ -31,6 +31,8 @@ DEFAULT_METADATA = {
     "project_acronym": "Ej: DCBCRA",
     "author_name": "Tu Nombre/Equipo"
 }
+
+# Forzar redeploy en Streamlit Cloud - v2.0.1
 ACCEPTED_VIDEO_TYPES = ["mp4", "mkv"]
 
 # --- Inicializar Session State ---
