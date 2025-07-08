@@ -2,14 +2,12 @@ import sys
 import os
 import base64
 import json
-import vertexai
-from vertexai.preview.generative_models import GenerativeModel, Part, FinishReason
-import vertexai.preview.generative_models as generative_models
+import google.generativeai as genai
 
 # --- CONFIGURACIÓN (¡MODIFICA ESTOS VALORES!) ---
-PROJECT_ID = "pdd-agent-456515"  # Reemplaza con tu ID de Proyecto de Google Cloud
-LOCATION = "us-central1"        # Reemplaza con tu región (ej: 'us-central1')
-# Reemplaza con el nombre exacto del modelo multimodal en Vertex AI
+# API Key para Google AI (Gemini)
+GEMINI_API_KEY = "AlzaSyD4vYjJ7n5KvdBeBBlwq4Efz-mJblJRpto"
+# Nombre del modelo Gemini
 MODEL_NAME = "gemini-2.5-pro-exp-03-25"
 # Ruta a tu archivo de video local
 VIDEO_PATH = "video_1.mkv"
@@ -65,52 +63,47 @@ def calculate_estimated_cost(input_tokens: int, output_tokens: int) -> float:
     return total_cost
 # <<< --- FIN DE LA FUNCIÓN --- >>>
 
-def analyze_video_steps(project_id: str, location: str, model_name: str, video_path: str):
+def analyze_video_steps(api_key: str, model_name: str, video_path: str):
     """
-    Analiza un video usando Vertex AI Gemini para extraer pasos y timestamps.
+    Analiza un video usando Google AI Gemini para extraer pasos y timestamps.
 
     Args:
-        project_id: ID del proyecto de Google Cloud.
-        location: Región de Vertex AI.
-        model_name: Nombre del modelo Generative AI (ej: gemini-1.0-pro-vision-001).
+        api_key: API Key de Google AI.
+        model_name: Nombre del modelo Gemini (ej: gemini-2.5-pro-exp-03-25).
         video_path: Ruta al archivo de video local.
 
     Returns:
         La estructura de datos Python parseada desde el JSON de respuesta, o None si falla.
     """
-    print(f"Inicializando Vertex AI para el proyecto {project_id} en {location}...")
+    print(f"Configurando Google AI Gemini con API key...")
     try:
-        vertexai.init(project=project_id, location=location)
+        genai.configure(api_key=api_key)
     except Exception as e:
-        print(f"Error al inicializar Vertex AI: {e}")
-        print("Asegúrate de haber ejecutado 'gcloud auth application-default login'")
-        return None
+        print(f"Error al configurar Google AI: {e}")
+        print("Verifica que tu API key sea correcta")
+        return None, f"Error de configuración: {e}"
 
     print(f"Cargando el modelo: {model_name}")
     try:
-        model = GenerativeModel(model_name)
+        model = genai.GenerativeModel(model_name)
     except Exception as e:
         print(f"Error al cargar el modelo: {e}")
-        print("Verifica que el nombre del modelo sea correcto y esté disponible en la región.")
-        return None
+        print("Verifica que el nombre del modelo sea correcto y esté disponible.")
+        return None, f"Error al cargar modelo: {e}"
 
     print(f"Verificando el archivo de video: {video_path}")
     if not os.path.exists(video_path):
         print(f"Error: No se encuentra el archivo de video en '{video_path}'")
-        return None
+        return None, "Archivo de video no encontrado"
 
-    print("Leyendo y codificando el video en Base64 (esto puede tardar)...")
+    print("Subiendo video a Google AI...")
     try:
-        with open(video_path, "rb") as video_file:
-            video_bytes = video_file.read()
-        encoded_content = base64.b64encode(video_bytes).decode("utf-8")
-        # Determinar MIME type (ajusta si tu video no es MP4)
-        mime_type = "video/mp4"
-        video_part = Part.from_data(data=encoded_content, mime_type=mime_type)
-        print("Video codificado exitosamente.")
+        # Subir el archivo de video usando la nueva API
+        video_file = genai.upload_file(path=video_path)
+        print(f"Video subido exitosamente. URI: {video_file.uri}")
     except Exception as e:
-        print(f"Error al leer o codificar el video: {e}")
-        return None
+        print(f"Error al subir el video: {e}")
+        return None, f"Error al subir video: {e}"
 
     # Define el prompt detallado
     prompt = """
@@ -241,18 +234,19 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
         "max_output_tokens": 20000,
     }
 
-    # Configuración de seguridad
-    safety_settings = {
-        generative_models.HarmCategory.HARM_CATEGORY_HATE_SPEECH: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        generative_models.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    }
+    # Configuración de seguridad para la nueva API
+    safety_settings = [
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    ]
 
-    print("Enviando solicitud a la API de Vertex AI (esto puede tardar y generar costos)...")
+    print("Enviando solicitud a la API de Google AI Gemini (esto puede tardar y generar costos)...")
     raw_response_text = ""
     try:
-        contents = [video_part, prompt]
+        # Crear el contenido con video y prompt
+        contents = [video_file, prompt]
         response = model.generate_content(
             contents,
             generation_config=generation_config,
@@ -354,18 +348,15 @@ def analyze_video_steps(project_id: str, location: str, model_name: str, video_p
 if __name__ == "__main__":
     print("--- Iniciando Fase 1: Análisis de Video con API ---")
     # Validar configuración inicial
-    if "tu-gcp-project-id" in PROJECT_ID or not PROJECT_ID:
-         print("Error Crítico: Debes establecer tu PROJECT_ID en la configuración del script.")
-         sys.exit(1)
-    if not LOCATION:
-         print("Error Crítico: Debes establecer tu LOCATION (región) en la configuración del script.")
+    if not GEMINI_API_KEY or "tu-api-key" in GEMINI_API_KEY:
+         print("Error Crítico: Debes establecer tu GEMINI_API_KEY en la configuración del script.")
          sys.exit(1)
     if not MODEL_NAME:
          print("Error Crítico: Debes establecer el MODEL_NAME en la configuración del script.")
          sys.exit(1)
 
     # Llamar a la función principal de análisis
-    extracted_steps, error = analyze_video_steps(PROJECT_ID, LOCATION, MODEL_NAME, VIDEO_PATH)
+    extracted_steps, error = analyze_video_steps(GEMINI_API_KEY, MODEL_NAME, VIDEO_PATH)
 
     if extracted_steps:
         print("\n--- Pasos Extraídos (Estructura Python) ---")

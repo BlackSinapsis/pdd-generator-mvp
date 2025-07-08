@@ -17,8 +17,7 @@ except ImportError as e:
     sys.exit(1)
 
 # --- Configuración Centralizada ---
-PROJECT_ID = "pdd-agent-456515" # TU PROJECT ID
-LOCATION = "us-central1"      # TU REGIÓN
+GEMINI_API_KEY = "AlzaSyD4vYjJ7n5KvdBeBBlwq4Efz-mJblJRpto" # TU API KEY DE GEMINI
 MODEL_NAME = "gemini-2.5-pro-exp-03-25" # O el modelo PRO que uses
 
 # Nombres de Archivos Intermedios/Salida
@@ -157,16 +156,15 @@ def run_pdd_pipeline(video_path: str, user_metadata: dict) -> tuple[bool, dict |
     # --- Fase 1.3: Análisis con IA ---
     print(f"\n[Pipeline] Ejecutando Fase 1.3: Análisis con API sobre '{os.path.basename(video_to_analyze)}'...")
     try:
-        if "tu-gcp-project-id" in PROJECT_ID or not PROJECT_ID or not LOCATION or not MODEL_NAME:
-             error_msg = "Configuración API incompleta (PROJECT_ID, LOCATION, MODEL_NAME)."
+        if not GEMINI_API_KEY or "tu-api-key" in GEMINI_API_KEY or not MODEL_NAME:
+             error_msg = "Configuración API incompleta (GEMINI_API_KEY, MODEL_NAME)."
              print(f"[Pipeline] Error: {error_msg}")
              # Limpiar video redimensionado si existe antes de salir
              if resized_created and resized_video_path and os.path.exists(resized_video_path): os.unlink(resized_video_path)
              return False, error_msg
 
         _, error_fase1 = analyze_video_steps(
-            project_id=PROJECT_ID,
-            location=LOCATION,
+            api_key=GEMINI_API_KEY,
             model_name=MODEL_NAME,
             video_path=video_to_analyze # <--- Pasar el video correcto (original o redimensionado)
         )
