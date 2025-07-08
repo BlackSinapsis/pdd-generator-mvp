@@ -1,6 +1,6 @@
-# PDD Agent 1.0 - Generador Automático de Documentos de Procedimiento
+# PDD Agent 2.0 - Generador Automático de Documentos de Procedimiento
 
-**🚀 Versión 1.0 - Generación Profesional de PDDs con IA Avanzada**
+**🚀 Versión 2.0 - Generación Profesional de PDDs con IA Avanzada**
 
 Este proyecto genera automáticamente Documentos de Descripción de Procesos (PDD) profesionales utilizando **Gemini 2.5 Pro** y análisis de video multimodal. Transforma grabaciones de procesos en documentación empresarial completa y estructurada.
 
@@ -8,7 +8,7 @@ Este proyecto genera automáticamente Documentos de Descripción de Procesos (PD
 
 ## 🎯 Descripción General
 
-PDD Agent 1.0 analiza grabaciones de video de procesos empresariales y genera automáticamente documentación PDD profesional que incluye:
+PDD Agent 2.0 analiza grabaciones de video de procesos empresariales y genera automáticamente documentación PDD profesional que incluye:
 
 - **Análisis detallado de pasos** con timestamps precisos
 - **Screenshots automáticos** sincronizados con cada acción
@@ -17,10 +17,11 @@ PDD Agent 1.0 analiza grabaciones de video de procesos empresariales y genera au
 - **Métricas de proceso** y indicadores de calidad
 - **Dependencias técnicas** identificadas automáticamente
 
-## ✨ Novedades de la Versión 1.0
+## ✨ Novedades de la Versión 2.0
 
 ### 🧠 **IA de Nueva Generación**
-- **Gemini 2.5 Pro**: Migración completa para análisis más preciso y contextual
+- **Gemini 2.5 Pro**: Migración completa a Google AI API para análisis más preciso y contextual
+- **Configuración simplificada**: Solo requiere API key, sin Google Cloud SDK
 - **Prompts profesionales**: 100% en español con tono asertivo empresarial
 - **Análisis sin referencias IA**: Elimina menciones a "inferido por IA" para documentación profesional
 
@@ -29,6 +30,11 @@ PDD Agent 1.0 analiza grabaciones de video de procesos empresariales y genera au
 - **Español nativo**: Eliminación completa del Spanglish
 - **Secciones enriquecidas**: Stakeholders, aplicaciones, métricas y más
 - **Screenshots integrados**: Evidencia visual perfectamente sincronizada
+
+### 🔧 **Configuración Simplificada**
+- **API Key directa**: Sin necesidad de Google Cloud Project o SDK
+- **Setup reducido**: Instalación más rápida y sencilla
+- **Menos dependencias**: Configuración streamline para desarrollo
 
 ### 📚 **Base de Conocimiento**
 - **Carpeta "Fuentes IA/"**: Documentación de referencia sobre:
@@ -46,7 +52,15 @@ PDD Agent 1.0 analiza grabaciones de video de procesos empresariales y genera au
 
 ## 📊 Historial de Versiones
 
-### **v1.0 - Generación Profesional con Gemini 2.5 Pro** ⭐ *ACTUAL*
+### **v2.0 - Configuración Simplificada con Google AI API** ⭐ *ACTUAL*
+- **API Directa**: Migración a Google AI API sin Google Cloud SDK
+- **Setup Simplificado**: Solo requiere API key para configuración
+- **Gemini 2.5 Pro**: Análisis superior con modelo de última generación
+- **Español Profesional**: Documentación empresarial nativa sin Spanglish
+- **DOCX v2.0**: Formato mejorado con estructura corporativa
+- **Control de Versiones**: Tags v1.0.0 y v2.0.0 en GitHub
+
+### **v1.0 - Generación Profesional con Gemini 2.5 Pro**
 - **IA Avanzada**: Gemini 2.5 Pro para análisis superior
 - **Español Profesional**: Documentación empresarial nativa
 - **DOCX v2.0**: Formato mejorado con estructura corporativa
@@ -81,16 +95,18 @@ PDD Agent 1.0 analiza grabaciones de video de procesos empresariales y genera au
 ## 🔧 Prerrequisitos
 
 - **Python 3.8+** instalado
-- **Google Cloud Project** con Vertex AI API habilitada
-- **Google Cloud SDK** (`gcloud`) instalado y configurado
-- **Autenticación activa**: `gcloud auth application-default login`
+- **Google AI API Key** - Obtener en [Google AI Studio](https://makersuite.google.com/app/apikey)
+- **FFmpeg** instalado (para procesamiento de video)
+  - Windows: Descargar desde [ffmpeg.org](https://ffmpeg.org/download.html)
+  - macOS: `brew install ffmpeg`
+  - Ubuntu/Debian: `sudo apt install ffmpeg`
 
 ## 📦 Instalación
 
 1. **Clonar el repositorio:**
    ```bash
    git clone https://github.com/BlackSinapsis/pdd-generator-mvp
-   cd pdd_agent
+   cd pdd-generator-mvp
    ```
 
 2. **Crear entorno virtual:**
@@ -107,13 +123,56 @@ PDD Agent 1.0 analiza grabaciones de video de procesos empresariales y genera au
    pip install -r requirements.txt
    ```
 
+4. **Obtener API Key de Google AI:**
+   - Visita [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Inicia sesión con tu cuenta de Google
+   - Haz clic en "Create API Key"
+   - Copia la API key generada
+
 ## ⚙️ Configuración
 
-### Configuración Básica
-Editar `pipeline_logic.py`:
-- `PROJECT_ID`: Tu ID de proyecto de Google Cloud
-- `LOCATION`: Región (ej: "us-central1")
-- `MODEL_NAME`: "gemini-2.0-flash-exp" (recomendado)
+### Configuración de API Key
+
+**Opción 1: Archivo .env (Más Recomendado) 🔐**
+
+Crear archivo `.env` en la carpeta raíz del proyecto:
+
+```bash
+# Crear archivo .env
+touch .env  # Linux/macOS
+# En Windows: crear archivo manualmente
+```
+
+Contenido del archivo `.env`:
+```env
+GOOGLE_AI_API_KEY=tu_api_key_aqui
+MODEL_NAME=gemini-2.5-pro
+LANGUAGE=es
+```
+
+> ⚠️ **Importante**: El archivo `.env` ya está incluido en `.gitignore` para proteger tus credenciales.
+
+**Opción 2: Variable de Entorno**
+```bash
+export GOOGLE_AI_API_KEY="tu_api_key_aqui"
+```
+
+**Opción 3: Editar directamente en `pipeline_logic.py`** *(No recomendado para producción)*
+```python
+GOOGLE_AI_API_KEY = "tu_api_key_aqui"  # Línea ~15
+```
+
+### Verificación de Configuración
+
+**Para uso con archivo .env (Recomendado):**
+- ✅ `python-dotenv` ya incluido en `requirements.txt`  
+- ✅ `.env` ya incluido en `.gitignore` para protección
+- ✅ `pipeline_logic.py` ya configurado para leer variables del `.env`
+
+**Variables disponibles en .env:**
+- `GOOGLE_AI_API_KEY`: Tu API key de Google AI (requerido)
+- `MODEL_NAME`: Modelo a usar, ej: "gemini-2.5-pro" (opcional)  
+- `LANGUAGE`: Idioma del análisis, ej: "es" (opcional)
 
 ### Configuración Avanzada
 - **Video Redimensionado**: Ajustar `RESIZE_VIDEO` y `RESIZE_TARGET_WIDTH`
@@ -198,7 +257,8 @@ python pipeline_logic.py video.mp4 \
 - Limpieza automática de archivos temporales
 
 ### **Análisis IA:**
-- Modelo: Gemini 2.5 Pro (gemini-2.0-flash-exp)
+- Modelo: Gemini 2.5 Pro (gemini-2.5-pro)
+- API: Google AI directa (sin Google Cloud requerido)
 - Prompts optimizados en español
 - Análisis multimodal (video + contexto)
 - Recuperación ante errores de API
@@ -211,19 +271,19 @@ python pipeline_logic.py video.mp4 \
 
 ## 🔮 Roadmap Futuro
 
-### **v1.1 - Mejoras UX**
+### **v2.1 - Mejoras UX**
 - [ ] Editor integrado para revisión de pasos
 - [ ] Preview en tiempo real del DOCX
 - [ ] Configuración avanzada desde UI
 - [ ] Plantillas DOCX personalizables
 
-### **v1.2 - Cloud Native**
+### **v2.2 - Cloud Native**
 - [ ] Despliegue en Google Cloud Run
 - [ ] Storage en Cloud Storage
 - [ ] Procesamiento distribuido
 - [ ] API REST completa
 
-### **v1.3 - Funcionalidades Avanzadas**
+### **v2.3 - Funcionalidades Avanzadas**
 - [ ] Análisis comparativo de procesos
 - [ ] Generación de diagramas BPMN mejorados
 - [ ] Integración con herramientas corporativas
@@ -249,7 +309,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 ---
 
-**🎉 ¡Gracias por usar PDD Agent 1.0!**
+**🎉 ¡Gracias por usar PDD Agent 2.0!**
 
 *Transformando procesos en documentación profesional con el poder de la IA avanzada.*
 
