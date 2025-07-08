@@ -3,12 +3,16 @@ import os
 import base64
 import json
 import google.generativeai as genai
+from dotenv import load_dotenv
 
-# --- CONFIGURACIÓN (¡MODIFICA ESTOS VALORES!) ---
-# API Key para Google AI (Gemini)
-GEMINI_API_KEY = "AlzaSyD4vYjJ7n5KvdBeBBlwq4Efz-mJblJRpto"
-# Nombre del modelo Gemini
-MODEL_NAME = "gemini-2.5-pro-exp-03-25"
+# Cargar variables de entorno
+load_dotenv()
+
+# --- CONFIGURACIÓN ---
+# API Key para Google AI (Gemini) desde .env
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Nombre del modelo Gemini desde .env
+MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro")
 # Ruta a tu archivo de video local
 VIDEO_PATH = "video_1.mkv"
 # Archivo donde se guardará la salida JSON

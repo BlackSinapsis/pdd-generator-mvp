@@ -4,6 +4,10 @@ import os
 import traceback # Para obtener más detalles de errores
 import tempfile
 import cv2 # Necesario para redimensionar
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
 
 # Importar las funciones principales de los scripts de las fases v0.3
 try:
@@ -17,8 +21,8 @@ except ImportError as e:
     sys.exit(1)
 
 # --- Configuración Centralizada ---
-GEMINI_API_KEY = "AlzaSyD4vYjJ7n5KvdBeBBlwq4Efz-mJblJRpto" # TU API KEY DE GEMINI
-MODEL_NAME = "gemini-2.5-pro-exp-03-25" # O el modelo PRO que uses
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") # API KEY DE GEMINI desde .env
+MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro") # Modelo desde .env
 
 # Nombres de Archivos Intermedios/Salida
 JSON_OUTPUT_PATH = 'full_analysis_output.json'
