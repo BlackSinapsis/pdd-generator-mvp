@@ -2,6 +2,7 @@ import sys
 import os
 import base64
 import json
+import time
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -105,6 +106,27 @@ def analyze_video_steps(api_key: str, model_name: str, video_path: str):
         # Subir el archivo de video usando la nueva API
         video_file = genai.upload_file(path=video_path)
         print(f"Video subido exitosamente. URI: {video_file.uri}")
+        
+        # Esperar a que el archivo esté activo
+        print("Esperando a que el archivo esté listo para procesar...")
+        max_wait_time = 300  # 5 minutos máximo
+        wait_start = time.time()
+        
+        while video_file.state.name == "PROCESSING":
+            if time.time() - wait_start > max_wait_time:
+                print("Error: Timeout esperando que el archivo esté activo")
+                return None, "Timeout esperando que el archivo esté activo"
+            
+            print(f"Archivo en estado: {video_file.state.name}. Esperando...")
+            time.sleep(10)  # Esperar 10 segundos
+            video_file = genai.get_file(video_file.name)
+        
+        if video_file.state.name != "ACTIVE":
+            print(f"Error: El archivo no está en estado ACTIVE. Estado actual: {video_file.state.name}")
+            return None, f"Archivo en estado inválido: {video_file.state.name}"
+            
+        print(f"✅ Archivo listo para procesar. Estado: {video_file.state.name}")
+        
     except Exception as e:
         print(f"Error al subir el video: {e}")
         return None, f"Error al subir video: {e}"
@@ -231,19 +253,31 @@ def analyze_video_steps(api_key: str, model_name: str, video_path: str):
 **¡IMPORTANTE!** Prioriza la validez del JSON y la precisión/detalle de `section_3_3_detailed_steps`. **La precisión en las interacciones con hojas de cálculo es CRÍTICA.** La calidad del texto narrativo generado es secundaria y requerirá revisión humana intensiva. El BPMN debe ser estructuralmente correcto y simple.
 """
     # Configuración de generación
-    generation_config = {
-        "temperature": 0.7,
-        "top_p": 0.95,
-        "top_k": 40,
-        "max_output_tokens": 20000,
-    }
+    generation_config = genai.GenerationConfig(
+        temperature=0.7,
+        top_p=0.95,
+        top_k=40,
+        max_output_tokens=20000,
+    )
 
     # Configuración de seguridad para la nueva API
     safety_settings = [
-        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {
+            "category": genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            "threshold": genai.types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+        },
+        {
+            "category": genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            "threshold": genai.types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+        },
+        {
+            "category": genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            "threshold": genai.types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+        },
+        {
+            "category": genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+            "threshold": genai.types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+        },
     ]
 
     print("Enviando solicitud a la API de Google AI Gemini (esto puede tardar y generar costos)...")
