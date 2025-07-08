@@ -6,8 +6,8 @@ import tempfile
 import cv2 # Necesario para redimensionar
 from dotenv import load_dotenv
 
-# Cargar variables de entorno
-load_dotenv()
+# Cargar variables de entorno (con override para sobrescribir variables del sistema)
+load_dotenv(override=True)
 
 # Importar las funciones principales de los scripts de las fases v0.3
 try:
