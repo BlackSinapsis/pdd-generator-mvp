@@ -26,10 +26,10 @@ if 'processing' not in st.session_state:
     st.session_state.processing = False
 
 # --- Definición de la Interfaz ---
-st.title("🤖 Generador Automático de PDD (v0.4)")
+st.title("🤖 Generador Automático de PDD (v2.0)")
 st.markdown("""
 Sube una grabación de pantalla de tu proceso (.mp4 o .mkv) y completa los metadatos
-para generar un borrador inicial del Documento de Descripción de Proceso (PDD).
+para generar un Documento de Descripción de Proceso (PDD) profesional usando **Gemini 2.5 Pro**.
 """)
 st.divider()
 
@@ -199,3 +199,11 @@ if st.session_state.pipeline_result:
 elif st.session_state.error_message:
     with results_area:
         st.error(f"❌ Error durante la generación del PDD:\n\n{st.session_state.error_message}")
+
+# --- Footer ---
+st.divider()
+st.markdown("""
+<div style='text-align: center; color: #666; font-size: 0.8em;'>
+    <p>🤖 PDD Agent v2.0 | Powered by Gemini 2.5 Pro | Documentación automática de procesos</p>
+</div>
+""", unsafe_allow_html=True)

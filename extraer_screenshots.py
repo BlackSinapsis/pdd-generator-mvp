@@ -13,30 +13,30 @@ OUTPUT_DIR = 'screenshots_output'
 
 def extract_screenshots(json_path: str, video_path: str, output_dir: str):
     """
-    Lee JSON complejo (v0.3), limpia directorio de salida, extrae fotogramas
-    basados en los timestamps originales del JSON. Devuelve True/False.
-    (Versión v0.3 - Usa clave 'section_3_3_detailed_steps')
+    Lee JSON v2.0, limpia directorio de salida, extrae fotogramas
+    basados en los timestamps del JSON. Devuelve True/False.
+    (Versión v2.0 - Usa clave 'process_steps')
     """
-    print(f"--- Iniciando Fase 2.2 (Adaptada para v0.3): Extracción de Screenshots ---")
-    print(f"JSON de entrada (Complejo): {json_path}")
+    print(f"--- Iniciando Fase 2.2 (v2.0): Extracción de Screenshots ---")
+    print(f"JSON de entrada (v2.0): {json_path}")
     print(f"Video de entrada: {video_path}")
     print(f"Directorio de salida: {output_dir}")
 
-    # 1. Cargar datos del JSON Complejo
-    print(f"\n[Paso 1/5] Cargando datos complejos desde '{json_path}'...")
+    # 1. Cargar datos del JSON v2.0
+    print(f"\n[Paso 1/5] Cargando datos desde '{json_path}'...")
     steps_list = [] # Inicializar como lista vacía
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             full_data = json.load(f)
-        print(f"Datos JSON complejos cargados exitosamente.")
+        print(f"Datos JSON v2.0 cargados exitosamente.")
 
-        # --- CORRECCIÓN AQUÍ: Usar la clave correcta del JSON v0.3 ---
-        steps_key_name = "section_3_3_detailed_steps" # <--- Clave v0.3
+        # --- ACTUALIZADO: Usar la nueva estructura JSON v2.0 ---
+        steps_key_name = "process_steps" # <--- Nueva clave v2.0
         steps_list = full_data.get(steps_key_name, [])
-        # --- FIN CORRECCIÓN ---
+        # --- FIN ACTUALIZACIÓN ---
 
         if not steps_list:
-             # Mensaje de advertencia actualizado para reflejar la clave buscada
+             # Mensaje de advertencia actualizado
              print(f"Advertencia: No se encontró la lista '{steps_key_name}' o está vacía en '{json_path}'. No se extraerán screenshots.")
         print(f"Se encontraron {len(steps_list)} pasos detallados para procesar.")
     except FileNotFoundError:
@@ -50,7 +50,7 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
         print(f"Error Crítico inesperado al leer el JSON: {e}")
         return False
 
-    # 2. Asegurar y Limpiar Directorio de Salida (sin cambios)
+    # 2. Asegurar y Limpiar Directorio de Salida
     print(f"\n[Paso 2/5] Asegurando y limpiando directorio de salida '{output_dir}'...")
     try:
         existed_before = os.path.isdir(output_dir)
@@ -89,14 +89,14 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
         print("\nNo hay pasos detallados para procesar. Finalizando extracción.")
         return True
 
-    # 3. Abrir el archivo de video (sin cambios)
+    # 3. Abrir el archivo de video
     print(f"\n[Paso 3/5] Abriendo archivo de video '{video_path}'...")
     video_capture = cv2.VideoCapture(video_path)
     if not video_capture.isOpened():
         print(f"Error Crítico: No se pudo abrir el archivo de video '{video_path}'.")
         return False
 
-    # 4. Obtener información del video (FPS y total de fotogramas) (sin cambios)
+    # 4. Obtener información del video (FPS y total de fotogramas)
     print(f"\n[Paso 4/5] Obteniendo información del video...")
     fps = video_capture.get(cv2.CAP_PROP_FPS)
     total_frames = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -108,8 +108,8 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
         duration_sec = total_frames / fps
         print(f"Información del video obtenida: FPS={fps:.2f}, Total Frames={total_frames}, Duración={duration_sec:.2f}s")
 
-    # 5. Procesar cada paso de la lista y extraer fotograma original (sin cambios)
-    print(f"\n[Paso 5/5] Procesando pasos y extrayendo fotogramas originales...")
+    # 5. Procesar cada paso de la lista y extraer fotograma
+    print(f"\n[Paso 5/5] Procesando pasos y extrayendo fotogramas...")
     extracted_count = 0
     skipped_count = 0
     error_count = 0
@@ -135,7 +135,7 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
              print(f"    Advertencia: Timestamp {timestamp_ms}ms resulta en fotograma negativo ({target_frame}). Usando primero (0).")
              target_frame = 0
 
-        # Posicionar y leer el fotograma exacto del timestamp original
+        # Posicionar y leer el fotograma exacto del timestamp
         video_capture.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
         ret, frame = video_capture.read()
 
@@ -173,10 +173,10 @@ def extract_screenshots(json_path: str, video_path: str, output_dir: str):
 
 # --- Bloque de Ejecución Principal ---
 if __name__ == "__main__":
-    # Llamar a la función original
+    # Llamar a la función actualizada
     success = extract_screenshots(JSON_INPUT_PATH, VIDEO_PATH, OUTPUT_DIR)
     if success:
-        print("\n--- Fase 2.2 (Standalone Test - v0.3 Key) Completada Exitosamente ---")
+        print("\n--- Fase 2.2 (Standalone Test - v2.0) Completada Exitosamente ---")
     else:
-        print("\n--- Fase 2.2 (Standalone Test - v0.3 Key) Completada con Errores/Advertencias ---")
+        print("\n--- Fase 2.2 (Standalone Test - v2.0) Completada con Errores/Advertencias ---")
 

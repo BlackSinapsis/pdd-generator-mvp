@@ -9,11 +9,11 @@ from dotenv import load_dotenv
 # Cargar variables de entorno (con override para sobrescribir variables del sistema)
 load_dotenv(override=True)
 
-# Importar las funciones principales de los scripts de las fases v0.3
+# Importar las funciones principales de los scripts de las fases v2.0
 try:
     from video_analyzer import analyze_video_steps
     from extraer_screenshots import extract_screenshots
-    from generar_docx_pdd import generate_pdd_docx_v0_3
+    from generar_docx_pdd_v2 import generate_pdd_docx_v2
 except ImportError as e:
     print(f"Error Crítico: No se pudieron importar funciones de los scripts de fases.")
     print(f"Asegúrate de que 'video_analyzer.py', 'extraer_screenshots.py', y 'generar_docx_pdd.py' estén en la misma carpeta.")
@@ -23,11 +23,12 @@ except ImportError as e:
 # --- Configuración Centralizada ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") # API KEY DE GEMINI desde .env
 MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro") # Modelo desde .env
+PROMPT_LANGUAGE = os.getenv("PROMPT_LANGUAGE", "es") # Idioma del prompt desde .env
 
 # Nombres de Archivos Intermedios/Salida
 JSON_OUTPUT_PATH = 'full_analysis_output.json'
 SCREENSHOT_DIR = 'screenshots_output'
-OUTPUT_DOCX_PATH = 'PDD_Generated_Output_v0.3.docx'
+OUTPUT_DOCX_PATH = 'PDD_Generated_Output_v2.0.docx'
 
 DEFAULT_USER_METADATA = {
     "project_name": "PDD Agent Process",
@@ -169,7 +170,8 @@ def run_pdd_pipeline(video_path: str, user_metadata: dict) -> tuple[bool, dict |
         _, error_fase1 = analyze_video_steps(
             api_key=GEMINI_API_KEY,
             model_name=MODEL_NAME,
-            video_path=video_to_analyze # <--- Pasar el video correcto (original o redimensionado)
+            video_path=video_to_analyze, # <--- Pasar el video correcto (original o redimensionado)
+            language=PROMPT_LANGUAGE # <--- Usar idioma configurado
         )
 
         if error_fase1:
@@ -220,11 +222,12 @@ def run_pdd_pipeline(video_path: str, user_metadata: dict) -> tuple[bool, dict |
         if "author_name" in user_metadata: final_metadata["author_name"] = user_metadata["author_name"]
         print(f"[Pipeline] Usando metadata final: {final_metadata}")
 
-        success_fase3 = generate_pdd_docx_v0_3(
+        success_fase3 = generate_pdd_docx_v2(
             json_path=JSON_OUTPUT_PATH,
             screenshot_dir=SCREENSHOT_DIR,
             output_docx_path=OUTPUT_DOCX_PATH,
-            user_metadata=final_metadata
+            user_metadata=final_metadata,
+            language=PROMPT_LANGUAGE  # <--- Usar idioma configurado
         )
         if not success_fase3:
             error_msg = "Fallo en Fase 3.3 (Generación DOCX)."

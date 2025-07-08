@@ -3,17 +3,391 @@ import os
 import base64
 import json
 import time
+from typing import Optional, Tuple
 import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Cargar variables de entorno (con override para sobrescribir variables del sistema)
 load_dotenv(override=True)
 
+# Prompt optimizado v2.0 integrado directamente
+def build_optimized_prompt(language="es"):
+    """
+    Construye el prompt optimizado con parámetro de idioma.
+    
+    Args:
+        language (str): Idioma del prompt ("es" o "en")
+        
+    Returns:
+        str: Prompt optimizado completo
+    """
+    
+    # Configuración de idioma
+    if language == "es":
+        prompt = f"""
+**IMPORTANTE: Debes responder EXCLUSIVAMENTE en español. Toda tu respuesta, incluidos todos los campos del JSON, deben estar completamente en idioma español.**
+
+**PERSONA:** Eres un analista experto en documentación de procesos de negocio con especialización en crear Documentos de Descripción de Procesos (PDD) profesionales. Tu experiencia se centra en analizar grabaciones de video de procesos empresariales para generar documentación precisa y neutral.
+
+**TAREA:** Analiza exhaustivamente el video proporcionado para documentar completamente el proceso de negocio As-Is mostrado en la grabación de pantalla. Genera un PDD profesional enfocado exclusivamente en documentar el estado actual sin consideraciones de automatización o estados futuros.
+
+**CONTEXTO:** 
+- Estás analizando un video que muestra un usuario ejecutando un proceso de negocio
+- Tu función es crear documentación objetiva de lo que se realiza actualmente
+- Este PDD será utilizado para comprensión de procesos, capacitación, auditorías o análisis de mejora
+- El documento debe ser profesional y adecuado para stakeholders empresariales
+- Enfócate en la observación factual en lugar de especulación
+
+**RAZONAMIENTO PASO A PASO:**
+
+1. **Análisis del Contenido del Video:** Observa todo el video e identifica el proceso de negocio central siendo ejecutado
+2. **Identificación del Contexto del Proceso:** Determina el contexto empresarial y propósito del proceso
+3. **Reconocimiento de Stakeholders:** Identifica participantes visibles y roles involucrados
+4. **Dependencias de Aplicaciones:** Lista todas las aplicaciones de software y sistemas utilizados
+5. **Desglose Paso a Paso:** Documenta cada acción cronológicamente con detalles precisos
+6. **Extracción de Reglas de Negocio:** Anota reglas, validaciones o puntos de decisión observados
+7. **Análisis de Entradas/Salidas:** Identifica entradas y salidas del proceso
+8. **Documentación de Excepciones:** Registra únicamente manejo de errores o excepciones observadas
+9. **Cálculo de Métricas:** Analiza datos de tiempo para métricas de eficiencia del proceso
+10. **Validación de Calidad:** Asegura que toda la documentación esté basada en evidencia observada
+
+**FORMATO:** Retorna tu análisis como un objeto JSON válido con la siguiente estructura:
+
+```json
+{{
+  "pdd_metadata": {{
+    "process_name": "string",
+    "process_acronym": "string | null",
+    "estimated_duration_minutes": "number",
+    "complexity_level": "Baja | Media | Alta"
+  }},
+  "process_context": {{
+    "business_purpose": "string",
+    "department_area": "string | null",
+    "process_owner_role": "string | null"
+  }},
+  "stakeholders_identified": [
+    {{
+      "role": "string",
+      "responsibilities": "string",
+      "evidence_level": "visible_en_video | rol_contextual"
+    }}
+  ],
+  "applications_dependencies": [
+    {{
+      "application_name": "string",
+      "application_type": "string",
+      "version_visible": "string | null",
+      "critical_for_process": "boolean"
+    }}
+  ],
+  "process_steps": [
+    {{
+      "step_number": "integer",
+      "action_summary": "string",
+      "detailed_description": "string",
+      "timestamp_ms": "integer",
+      "application_in_focus": "string",
+      "ui_elements_details": "string",
+      "data_manipulated": "string | null",
+      "validation_performed": "string | null"
+    }}
+  ],
+  "process_inputs": [
+    {{
+      "input_name": "string",
+      "input_type": "archivo | datos | formulario | sistema",
+      "source": "string",
+      "required": "boolean"
+    }}
+  ],
+  "process_outputs": [
+    {{
+      "output_name": "string",
+      "output_type": "archivo | datos | reporte | notificacion",
+      "destination": "string",
+      "format": "string | null"
+    }}
+  ],
+  "business_rules_observed": [
+    {{
+      "rule_description": "string",
+      "trigger_condition": "string",
+      "evidence_type": "explicitamente_mostrado | comportamiento_usuario | respuesta_sistema"
+    }}
+  ],
+  "exceptions_observed": [
+    {{
+      "exception_type": "negocio | tecnico | usuario",
+      "description": "string",
+      "handling_method": "string",
+      "evidence_timestamp_ms": "integer | null"
+    }}
+  ],
+  "process_metrics": {{
+    "total_execution_time_seconds": "number",
+    "manual_steps_count": "integer",
+    "system_interactions_count": "integer",
+    "data_entry_steps_count": "integer",
+    "validation_steps_count": "integer"
+  }},
+  "technical_dependencies": [
+    {{
+      "dependency_name": "string",
+      "dependency_type": "software | red | hardware | acceso",
+      "criticality": "alta | media | baja"
+    }}
+  ],
+  "quality_indicators": {{
+    "user_hesitation_observed": "boolean",
+    "error_corrections_count": "integer",
+    "repeated_actions_count": "integer",
+    "help_seeking_behavior": "boolean"
+  }}
+}}
+```
+
+**INSTRUCCIONES ESPECÍFICAS:**
+
+1. **Nombre del Proceso y Contexto:**
+   - Genera un nombre de proceso profesional y descriptivo
+   - Determina el propósito empresarial basado en acciones observadas y contexto
+   - Estima la complejidad basada en número de pasos y puntos de decisión
+
+2. **Identificación de Stakeholders:**
+   - Incluye siempre al ejecutor del video como "Ejecutor del Proceso" o "Experto en la Materia"
+   - Identifica otros roles basados en el contexto del proceso (aprobadores, revisores, etc.)
+   - Marca evidence_level como "visible_en_video" para participantes visibles, "rol_contextual" para roles del contexto
+
+3. **Dependencias de Aplicaciones:**
+   - Lista TODAS las aplicaciones utilizadas, incluyendo sistema operativo si es visible
+   - Identifica tipos de aplicación (ERP, Browser, Spreadsheet, etc.)
+   - Anota números de versión si son visibles en la UI
+
+4. **Pasos del Proceso - PRECISIÓN CRÍTICA:**
+   - Usa descripciones orientadas a la acción ("Abrir", "Hacer clic", "Ingresar", "Validar")
+   - Para aplicaciones de hoja de cálculo: Identifica referencias exactas de celdas (A1, B2), nombres de hojas, encabezados de columnas
+   - Incluye TODOS los elementos visibles de UI: nombres de botones, elementos de menú, etiquetas de campos
+   - Captura texto exacto ingresado, URLs visitadas, nombres de archivos utilizados
+   - Anota cualquier paso de validación o confirmación
+
+5. **Reglas de Negocio - Solo Evidencia:**
+   - Documenta ÚNICAMENTE reglas que son explícitamente demostradas o aplicadas por el sistema
+   - No especules o sugieras reglas adicionales
+   - Incluye tipo de evidencia para cada regla
+
+6. **Cálculo de Métricas:**
+   - Calcula tiempo total del proceso desde la primera hasta la última acción
+   - Cuenta diferentes tipos de interacciones para análisis de eficiencia
+   - Cuenta pasos de validación y verificación de calidad
+
+7. **Observaciones de Calidad:**
+   - Anota comportamiento del usuario que indica complejidad del proceso o problemas
+   - Cuenta errores o correcciones observables
+   - Identifica acciones repetidas o ineficientes
+
+**REQUISITOS CRÍTICOS:**
+- Documenta únicamente lo que observas - evita especulación
+- Mantén un tono profesional y neutral en todo momento
+- Asegura que todos los timestamps sean precisos y secuenciales
+- Valida la sintaxis JSON antes de la salida
+- Enfócate en documentación factual sobre interpretación
+- Sin recomendaciones de automatización o estados futuros
+
+**SALIDA:** Retorna únicamente el objeto JSON, sin texto adicional o formato markdown.
+
+**RECORDATORIO FINAL: Tu respuesta COMPLETA debe estar en ESPAÑOL. Todos los textos, descripciones, nombres de campos y valores en el JSON deben estar en idioma español. NO uses palabras en inglés.**
+"""
+    else:
+        # Versión en inglés (mantener la original pero actualizada)
+        prompt = f"""
+**PERSONA:** You are an expert business process documentation analyst with expertise in creating professional Process Description Documents (PDDs). You specialize in analyzing video recordings of business processes to generate accurate, neutral documentation.
+
+**TASK:** Analyze the provided video comprehensively to document the As-Is business process shown in the screen recording. Generate a professional PDD focused exclusively on documenting the current state without any automation or future-state considerations.
+
+**CONTEXT:** 
+- You are analyzing a video that shows a user performing a business process
+- Your role is to create objective documentation of what is currently done
+- This PDD will be used for process understanding, training, auditing, or improvement analysis
+- The document must be professional and suitable for business stakeholders
+- Focus on factual observation rather than speculation
+
+**CHAIN OF THOUGHT REASONING:**
+
+1. **Video Content Analysis:** Watch the entire video and identify the core business process being performed
+2. **Process Context Identification:** Determine the business context and purpose of the process
+3. **Stakeholder Recognition:** Identify any visible participants and involved roles
+4. **Application Dependencies:** List all software applications and systems used
+5. **Step-by-Step Breakdown:** Document each action chronologically with precise details
+6. **Business Rules Extraction:** Note observed rules, validations, or decision points
+7. **Input/Output Analysis:** Identify process inputs and outputs
+8. **Exception Documentation:** Record only observed error handling or exceptions
+9. **Metrics Calculation:** Analyze timing data for process efficiency metrics
+10. **Quality Validation:** Ensure all documentation is based on observed evidence
+
+**FORMAT:** Return your analysis as a valid JSON object with the following structure:
+
+```json
+{{
+  "pdd_metadata": {{
+    "process_name": "string",
+    "process_acronym": "string | null",
+    "estimated_duration_minutes": "number",
+    "complexity_level": "Low | Medium | High"
+  }},
+  "process_context": {{
+    "business_purpose": "string",
+    "department_area": "string | null",
+    "process_owner_role": "string | null"
+  }},
+  "stakeholders_identified": [
+    {{
+      "role": "string",
+      "responsibilities": "string",
+      "evidence_level": "visible_in_video | contextual_role"
+    }}
+  ],
+  "applications_dependencies": [
+    {{
+      "application_name": "string",
+      "application_type": "string",
+      "version_visible": "string | null",
+      "critical_for_process": "boolean"
+    }}
+  ],
+  "process_steps": [
+    {{
+      "step_number": "integer",
+      "action_summary": "string",
+      "detailed_description": "string",
+      "timestamp_ms": "integer",
+      "application_in_focus": "string",
+      "ui_elements_details": "string",
+      "data_manipulated": "string | null",
+      "validation_performed": "string | null"
+    }}
+  ],
+  "process_inputs": [
+    {{
+      "input_name": "string",
+      "input_type": "file | data | form | system",
+      "source": "string",
+      "required": "boolean"
+    }}
+  ],
+  "process_outputs": [
+    {{
+      "output_name": "string",
+      "output_type": "file | data | report | notification",
+      "destination": "string",
+      "format": "string | null"
+    }}
+  ],
+  "business_rules_observed": [
+    {{
+      "rule_description": "string",
+      "trigger_condition": "string",
+      "evidence_type": "explicitly_shown | user_behavior | system_response"
+    }}
+  ],
+  "exceptions_observed": [
+    {{
+      "exception_type": "business | technical | user",
+      "description": "string",
+      "handling_method": "string",
+      "evidence_timestamp_ms": "integer | null"
+    }}
+  ],
+  "process_metrics": {{
+    "total_execution_time_seconds": "number",
+    "manual_steps_count": "integer",
+    "system_interactions_count": "integer",
+    "data_entry_steps_count": "integer",
+    "validation_steps_count": "integer"
+  }},
+  "technical_dependencies": [
+    {{
+      "dependency_name": "string",
+      "dependency_type": "software | network | hardware | access",
+      "criticality": "high | medium | low"
+    }}
+  ],
+  "quality_indicators": {{
+    "user_hesitation_observed": "boolean",
+    "error_corrections_count": "integer",
+    "repeated_actions_count": "integer",
+    "help_seeking_behavior": "boolean"
+  }}
+}}
+```
+
+**SPECIFIC INSTRUCTIONS:**
+
+1. **Process Name & Context:**
+   - Generate a professional, descriptive process name
+   - Determine business purpose from observed actions and context
+   - Estimate complexity based on number of steps and decision points
+
+2. **Stakeholder Identification:**
+   - Always include the video performer as "Process Executor" or "Subject Matter Expert"
+   - Identify other roles based on process context (approvers, reviewers, etc.)
+   - Mark evidence_level as "visible_in_video" for visible participants, "contextual_role" for context-based roles
+
+3. **Application Dependencies:**
+   - List ALL applications used, including operating system if visible
+   - Identify application types (ERP, Browser, Spreadsheet, etc.)
+   - Note version numbers if visible in UI
+
+4. **Process Steps - CRITICAL PRECISION:**
+   - Use action-oriented descriptions ("Open", "Click", "Enter", "Validate")
+   - For spreadsheet applications: Identify exact cell references (A1, B2), sheet names, column headers
+   - Include ALL visible UI elements: button names, menu items, field labels
+   - Capture exact text entered, URLs visited, file names used
+   - Note any validation or confirmation steps
+
+5. **Business Rules - Evidence Only:**
+   - Document ONLY rules that are explicitly demonstrated or enforced by the system
+   - Do not speculate or suggest additional rules
+   - Include evidence type for each rule
+
+6. **Metrics Calculation:**
+   - Calculate total process time from first to last action
+   - Count different types of interactions for efficiency analysis
+   - Count validation and quality check steps
+
+7. **Quality Observations:**
+   - Note user behavior that indicates process complexity or issues
+   - Count observable errors or corrections
+   - Identify repeated or inefficient actions
+
+**CRITICAL REQUIREMENTS:**
+- Document only what you observe - avoid speculation
+- Maintain professional, neutral tone throughout
+- Ensure all timestamps are accurate and sequential
+- Validate JSON syntax before output
+- Focus on factual documentation over interpretation
+- No automation or future-state recommendations
+
+**OUTPUT:** Return only the JSON object, no additional text or markdown formatting.
+"""
+
+    return prompt
+
+# Configuración de generación optimizada para análisis detallado
+OPTIMIZED_GENERATION_CONFIG = {
+    "temperature": 0.1,  # Baja para consistencia y precisión factual
+    "top_p": 0.9,       # Enfoque en tokens más probables
+    "top_k": 20,        # Limitar opciones para mayor consistencia
+    "max_output_tokens": 25000  # Aumentado para análisis detallado
+}
+
 # --- CONFIGURACIÓN ---
 # API Key para Google AI (Gemini) desde .env
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 # Nombre del modelo Gemini desde .env
 MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro")
+# Parámetro de idioma para el prompt (configurable)
+PROMPT_LANGUAGE = os.getenv("PROMPT_LANGUAGE", "es")  # "es" o "en"
 # Ruta a tu archivo de video local
 VIDEO_PATH = "video_1.mkv"
 # Archivo donde se guardará la salida JSON
@@ -68,19 +442,26 @@ def calculate_estimated_cost(input_tokens: int, output_tokens: int) -> float:
     return total_cost
 # <<< --- FIN DE LA FUNCIÓN --- >>>
 
-def analyze_video_steps(api_key: str, model_name: str, video_path: str):
+def analyze_video_steps(api_key: str, model_name: str, video_path: str, language: Optional[str] = None):
     """
-    Analiza un video usando Google AI Gemini para extraer pasos y timestamps.
+    Analiza un video usando Google AI Gemini para extraer pasos y información del proceso.
 
     Args:
         api_key: API Key de Google AI.
-        model_name: Nombre del modelo Gemini (ej: gemini-2.5-pro-exp-03-25).
+        model_name: Nombre del modelo Gemini (ej: gemini-2.5-flash-lite-preview-06-17).
         video_path: Ruta al archivo de video local.
+        language: Idioma del prompt ("es" o "en"). Si None, usa PROMPT_LANGUAGE.
 
     Returns:
         La estructura de datos Python parseada desde el JSON de respuesta, o None si falla.
     """
+    # Usar idioma configurado si no se especifica
+    if language is None:
+        language = PROMPT_LANGUAGE
+        
     print(f"Configurando Google AI Gemini con API key...")
+    print(f"Idioma del análisis: {language}")
+    
     try:
         genai.configure(api_key=api_key)
     except Exception as e:
@@ -131,106 +512,16 @@ def analyze_video_steps(api_key: str, model_name: str, video_path: str):
         print(f"Error al subir el video: {e}")
         return None, f"Error al subir video: {e}"
 
-    # Define el prompt detallado
-    prompt = """
-**Tarea Principal:** Eres un asistente experto en análisis de procesos de negocio y documentación técnica (PDD). Analiza exhaustivamente el video proporcionado que muestra un proceso en pantalla. Tu objetivo es extraer información detallada y generar un borrador inicial para la mayoría de las secciones de un PDD profesional, estructurando toda la salida en un **único objeto JSON válido**.
-
-**Instrucciones Generales:**
-1.  Observa CADA acción visual y cambio significativo.
-2.  Infiere el contexto y propósito basándote ÚNICAMENTE en lo visible.
-3.  Genera la salida **estrictamente** en el formato JSON especificado abajo, sin texto introductorio, comentarios fuera del JSON, ni marcado como ```json ... ```. La respuesta DEBE ser solo el objeto JSON.
-4.  Para las secciones de texto narrativo (marcadas como `_text` o `_suggestion`), genera un borrador conciso y relevante basado en el video. Sé consciente de que este texto requerirá revisión humana. Si no puedes inferir contenido útil para una sección, devuelve `null` para esa clave específica.
-
-**Estructura JSON de Salida Requerida (v0.3 - Sin Coordenadas):**
-
-```json
-{
-  "pdd_metadata_inferred": {
-    "process_name_suggestion": "string | null",
-    "potential_acronym": "string | null"
-  },
-  "section_1_1_purpose_text": "string | null",
-  "section_1_2_objectives_text": "string | null",
-  "section_1_3_1_scope_in_suggestion": "string | null",
-  "section_1_3_2_scope_out_suggestion": "string | null",
-  "section_2_0_context_text": "string | null",
-  "section_3_1_as_is_summary_text": "string | null",
-  "section_3_1_user_roles_inferred": ["string"],
-  "section_3_3_detailed_steps": [
-    {
-      "step_number": "integer",
-      "description": "string",
-      "timestamp_ms": "integer",
-      "application_in_focus": "string",
-      "action_type_inferred": "string"
-      // Coordenadas X e Y eliminadas
-    }
-  ],
-  "section_3_4_inputs_suggestion": "string | null",
-  "section_3_5_outputs_suggestion": "string | null",
-  "section_3_6_rules_suggestion": "string | null",
-  "section_4_1_tobe_summary_suggestion": "string | null",
-  "section_4_3_interaction_suggestion": "string | null",
-  "section_5_exceptions_suggestions": [
-    {
-      "exception_type": "string", // "Negocio" o "Aplicación"
-      "description": "string",
-      "potential_trigger": "string",
-      "suggested_handling_idea": "string"
-    }
-  ],
-  "section_6_2_dependencies_suggestion": "string | null",
-  "section_6_4_reporting_suggestion": "string | null"
-}
-```
-
-**Detalle de Secciones a Generar (Instrucciones Específicas):**
-
-* **`pdd_metadata_inferred`**:
-    * `process_name_suggestion`: Infiere nombre corto y descriptivo.
-    * `potential_acronym`: Infiere acrónimo si aplica.
-* **`section_1_1_purpose_text`**: Genera 1-2 frases sobre el propósito inferido de documentar este proceso.
-* **`section_1_2_objectives_text`**: **REVISADO:** Basándote en las ineficiencias o tareas manuales repetitivas observadas en el video, genera 1-2 frases describiendo los **objetivos directos** que la automatización buscaría lograr. Usa un lenguaje asertivo. Ejemplos: "Reducir el tiempo dedicado a la recopilación manual de datos.", "Minimizar los errores humanos asociados a la copia y pegado.", "Asegurar la disponibilidad oportuna de las cotizaciones para análisis." *Nota: Aunque el lenguaje es directo, estos siguen siendo objetivos inferidos del video y requieren validación humana.*
-* **`section_1_3_1_scope_in_suggestion`**: Genera una lista o frases cortas de las tareas principales observadas que *parecen* ser el núcleo del proceso a automatizar. *Muy especulativo.*
-* **`section_1_3_2_scope_out_suggestion`**: Genera una lista o frases cortas de tareas observadas que *podrían* quedar fuera (ej: login, preparación inicial, pasos muy complejos o ambiguos). *Muy especulativo.*
-* **`section_2_0_context_text`**: **REVISADO:** Genera 1-2 párrafos describiendo el contexto funcional observado en el video. Usa un lenguaje asertivo. Ejemplo: "El proceso se desarrolla en el contexto de la recopilación de datos financieros, involucrando el uso de un navegador web y una hoja de cálculo." *Nota: Esta descripción se basa únicamente en las aplicaciones y acciones visibles y requiere validación humana para confirmar el contexto de negocio real.*
-* **`section_3_1_as_is_summary_text`**: Genera un resumen de 3-5 frases del flujo principal observado de principio a fin.
-* **`section_3_1_user_roles_inferred`**: Lista los roles inferidos basados en las aplicaciones usadas (ej: "Usuario Navegador Web", "Usuario Microsoft Excel").
-* **`section_3_3_detailed_steps`**: Lista de objetos por paso:
-    * `step_number`: Secuencial (1, 2, 3...).
-    * `description`: **REFINADO:** Resumen conciso y **orientado a la acción** (Prioriza verbo claro: "Abrir X", "Hacer clic Y", "Ingresar Z").
-    * `timestamp_ms`: Momento clave (entero, lo más preciso posible).
-    * `application_in_focus`: Aplicación principal (ej: "Microsoft Excel", "Google Chrome"). Si no clara, "Desconocida".
-    * `action_type_inferred`: Descripción **ULTRA DETALLADA** de la interacción UI.
-        * Incluye el texto EXACTO de botones, menús, enlaces, URLs visibles, texto tecleado, nombres de archivo.
-        * **¡¡ATENCIÓN ESPECIALÍSIMA A HOJAS DE CÁLCULO (Excel, Sheets)!!**
-            * Si se hace clic en una celda, se escribe en ella, o **se pegan datos**:
-                * Identifica la **REFERENCIA EXACTA de la celda (ej: 'B2', 'C5', 'A1')** visible donde ocurre o comienza la acción. ¡Sé muy preciso!
-                * Identifica el **NOMBRE DE LA HOJA (Worksheet) activa** (ej: 'Sheet1', 'Hoja1', 'Datos') si es visible.
-                * Si existe, Identifica el **NOMBRE DEL ENCABEZADO DE COLUMNA** directamente sobre la celda de acción, si es visible (ej: "Columna 'Fecha'", "Encabezado 'Vendedor'").
-            * Si se selecciona o pega los datos en un rango, indica el rango exacto (ej: "Seleccionar rango 'A1:C10' en hoja 'Sheet1'").
-        * Sé lo más específico posible sobre el *lugar* y *contexto* de la interacción. Ejemplo detallado: "Pegar datos (Ctrl+V) en la hoja **'Hoja1'**, comenzando **específicamente en la celda 'B2'** bajo la columna **'Fecha'**."
-* **`section_3_4_inputs_suggestion`**: Describe brevemente los inputs inferidos (ej: "Sitio web X", "Archivo Y descargado"). *Especulativo.*
-* **`section_3_5_outputs_suggestion`**: Describe brevemente los outputs inferidos (ej: "Datos pegados en Excel", "Archivo Z guardado"). *Especulativo.*
-* **`section_3_6_rules_suggestion`**: Intenta inferir reglas de negocio MUY simples si son obvias en el flujo (ej: "Si el archivo falla, copiar datos manualmente"). *Muy especulativo.*
-* **`section_4_1_tobe_summary_suggestion`**: Genera 1-2 frases sugiriendo cómo podría ser el proceso automatizado (ej: "El robot navegará, descargará/copiará datos y los pegará automáticamente..."). *Muy especulativo.*
-* **`section_4_3_interaction_suggestion`**: Sugiere posibles puntos de interacción humana basados en el flujo As-Is (ej: "Validación manual de datos", "Manejo de errores no esperados"). *Muy especulativo.*
-* **`section_5_exceptions_suggestions`**: Lista 2-4 sugerencias de excepciones/errores comunes:
-    * `exception_type`: "Negocio" o "Aplicación".
-    * `description`: Descripción del problema potencial.
-    * `potential_trigger`: Qué podría causarlo.
-    * `suggested_handling_idea`: Idea breve de manejo.
-* **`section_6_2_dependencies_suggestion`**: Intenta listar dependencias obvias (ej: "Acceso a internet", "Aplicación X instalada"). *Especulativo.*
-* **`section_6_4_reporting_suggestion`**: Sugiere logs básicos (ej: "Registrar inicio/fin", "Registrar error"). *Especulativo.*
-
-**¡IMPORTANTE!** Prioriza la validez del JSON y la precisión/detalle de `section_3_3_detailed_steps`. **La precisión en las interacciones con hojas de cálculo es CRÍTICA.** La calidad del texto narrativo generado es secundaria y requerirá revisión humana intensiva.
-"""
-    # Configuración de generación
+    # Construir el prompt optimizado con el idioma especificado
+    print(f"Construyendo prompt optimizado (v2.0) en idioma: {language}")
+    prompt = build_optimized_prompt(language=language)
+    
+    # Configuración de generación optimizada
     generation_config = genai.GenerationConfig(
-        temperature=0.7,
-        top_p=0.95,
-        top_k=40,
-        max_output_tokens=20000,
+        temperature=OPTIMIZED_GENERATION_CONFIG["temperature"],
+        top_p=OPTIMIZED_GENERATION_CONFIG["top_p"],
+        top_k=OPTIMIZED_GENERATION_CONFIG["top_k"],
+        max_output_tokens=OPTIMIZED_GENERATION_CONFIG["max_output_tokens"],
     )
 
     # Configuración de seguridad para la nueva API
@@ -254,6 +545,7 @@ def analyze_video_steps(api_key: str, model_name: str, video_path: str):
     ]
 
     print("Enviando solicitud a la API de Google AI Gemini (esto puede tardar y generar costos)...")
+    print("Usando configuración optimizada para análisis preciso de procesos...")
     raw_response_text = ""
     try:
         # Crear el contenido con video y prompt
@@ -366,7 +658,7 @@ def analyze_video_steps(api_key: str, model_name: str, video_path: str):
 
 # --- Ejecución Principal ---
 if __name__ == "__main__":
-    print("--- Iniciando Fase 1: Análisis de Video con API ---")
+    print("--- Iniciando Fase 1: Análisis de Video con Prompt Optimizado v2.0 ---")
     # Validar configuración inicial
     if not GEMINI_API_KEY or "tu-api-key" in GEMINI_API_KEY:
          print("Error Crítico: Debes establecer tu GEMINI_API_KEY en la configuración del script.")
@@ -376,10 +668,10 @@ if __name__ == "__main__":
          sys.exit(1)
 
     # Llamar a la función principal de análisis
-    extracted_steps, error = analyze_video_steps(GEMINI_API_KEY, MODEL_NAME, VIDEO_PATH)
+    extracted_steps, error = analyze_video_steps(GEMINI_API_KEY, MODEL_NAME, VIDEO_PATH, PROMPT_LANGUAGE)
 
     if extracted_steps:
-        print("\n--- Pasos Extraídos (Estructura Python) ---")
+        print("\n--- Análisis Completado (Estructura Python v2.0) ---")
         print(json.dumps(extracted_steps, indent=2, ensure_ascii=False))
         print(f"\nProceso completado exitosamente. JSON guardado en: {OUTPUT_JSON_PATH}")
     else:
