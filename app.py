@@ -1,12 +1,28 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import os
+import sys
 import tempfile # Para manejar archivos temporales
-# Asegúrate que pipeline_logic.py está en la misma carpeta o ajusta la importación
+
+# Asegurar que el directorio actual está en el path de Python
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# Verificar que pipeline_logic.py existe físicamente
+pipeline_file = os.path.join(current_dir, 'pipeline_logic.py')
+if not os.path.exists(pipeline_file):
+    st.error(f"Error crítico: No se encontró 'pipeline_logic.py' en {current_dir}")
+    st.error(f"Archivos en el directorio: {os.listdir(current_dir)}")
+    st.stop()
+
+# Importar el módulo
 try:
     from pipeline_logic import run_pdd_pipeline
-except ImportError:
-    st.error("Error crítico: No se pudo encontrar el módulo 'pipeline_logic.py'. Asegúrate de que el archivo existe en la misma carpeta que 'app.py'.")
+except ImportError as e:
+    st.error(f"Error al importar pipeline_logic: {e}")
+    st.error(f"Directorio actual: {current_dir}")
+    st.error(f"Python path: {sys.path}")
     st.stop() # Detener la ejecución si no se puede importar
 
 # --- Configuración Inicial ---
