@@ -28,7 +28,6 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro") # Modelo desde .env
 JSON_OUTPUT_PATH = 'full_analysis_output.json'
 SCREENSHOT_DIR = 'screenshots_output'
 OUTPUT_DOCX_PATH = 'PDD_Generated_Output_v0.3.docx'
-OUTPUT_BPMN_PATH = 'Generated_Process.bpmn'
 
 DEFAULT_USER_METADATA = {
     "project_name": "PDD Agent Process",
@@ -212,8 +211,8 @@ def run_pdd_pipeline(video_path: str, user_metadata: dict) -> tuple[bool, dict |
         if resized_created and resized_video_path and os.path.exists(resized_video_path): os.unlink(resized_video_path)
         return False, error_msg
 
-    # --- Fase 3.3: Generación DOCX y BPMN ---
-    print("\n[Pipeline] Ejecutando Fase 3.3: Generación DOCX y BPMN...")
+    # --- Fase 3.3: Generación DOCX ---
+    print("\n[Pipeline] Ejecutando Fase 3.3: Generación DOCX...")
     try:
         final_metadata = DEFAULT_USER_METADATA.copy()
         if "project_name" in user_metadata: final_metadata["project_name"] = user_metadata["project_name"]
@@ -225,11 +224,10 @@ def run_pdd_pipeline(video_path: str, user_metadata: dict) -> tuple[bool, dict |
             json_path=JSON_OUTPUT_PATH,
             screenshot_dir=SCREENSHOT_DIR,
             output_docx_path=OUTPUT_DOCX_PATH,
-            output_bpmn_path=OUTPUT_BPMN_PATH,
             user_metadata=final_metadata
         )
         if not success_fase3:
-            error_msg = "Fallo en Fase 3.3 (Generación DOCX/BPMN)."
+            error_msg = "Fallo en Fase 3.3 (Generación DOCX)."
             print(f"[Pipeline] Error: {error_msg}")
             if resized_created and resized_video_path and os.path.exists(resized_video_path): os.unlink(resized_video_path)
             return False, error_msg
@@ -254,7 +252,6 @@ def run_pdd_pipeline(video_path: str, user_metadata: dict) -> tuple[bool, dict |
     print("\n--- Ejecución del Pipeline PDD v0.3 Finalizada Exitosamente ---")
     result_payload = {
         'docx_path': OUTPUT_DOCX_PATH,
-        'bpmn_path': OUTPUT_BPMN_PATH,
         'json_path': JSON_OUTPUT_PATH
     }
     return True, result_payload

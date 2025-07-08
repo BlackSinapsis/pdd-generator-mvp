@@ -156,7 +156,6 @@ def analyze_video_steps(api_key: str, model_name: str, video_path: str):
   "section_2_0_context_text": "string | null",
   "section_3_1_as_is_summary_text": "string | null",
   "section_3_1_user_roles_inferred": ["string"],
-  "section_3_2_bpmn_xml_code": "string | null",
   "section_3_3_detailed_steps": [
     {
       "step_number": "integer",
@@ -197,32 +196,6 @@ def analyze_video_steps(api_key: str, model_name: str, video_path: str):
 * **`section_2_0_context_text`**: **REVISADO:** Genera 1-2 párrafos describiendo el contexto funcional observado en el video. Usa un lenguaje asertivo. Ejemplo: "El proceso se desarrolla en el contexto de la recopilación de datos financieros, involucrando el uso de un navegador web y una hoja de cálculo." *Nota: Esta descripción se basa únicamente en las aplicaciones y acciones visibles y requiere validación humana para confirmar el contexto de negocio real.*
 * **`section_3_1_as_is_summary_text`**: Genera un resumen de 3-5 frases del flujo principal observado de principio a fin.
 * **`section_3_1_user_roles_inferred`**: Lista los roles inferidos basados en las aplicaciones usadas (ej: "Usuario Navegador Web", "Usuario Microsoft Excel").
-* **`section_3_2_bpmn_xml_code`**: **¡Genera código XML BPMN 2.0 VÁLIDO y SIMPLIFICADO!**
-    * Analiza la secuencia de `detailed_steps`.
-    * **DEBE** incluir el encabezado XML (`<?xml...?>`) y `<bpmn:definitions ...>` con namespaces y un targetNamespace.
-    * **DEBE** incluir un `<bpmn:process id="GeneratedProcess_1">`.
-    * **NO INCLUIR:** Collaboration, Participant, LaneSet, Lanes.
-    * **DEBE** incluir un `<bpmn:startEvent id="StartEvent_1">`.
-    * **DEBE** incluir una secuencia de `<bpmn:userTask id="Task_{step_number}" name="{description}">`. Usa el campo `description` (el resumen corto) del paso como `name`. Asegura IDs únicos (Task_1, Task_2, etc.).
-    * **DEBE** incluir un `<bpmn:endEvent id="EndEvent_1">`.
-    * **DEBE** incluir los `<bpmn:sequenceFlow id="Flow_{id_unico}" sourceRef="..." targetRef="...">` conectando secuencialmente Start -> Task_1 -> Task_2 -> ... -> EndEvent. Asegura IDs únicos y referencias correctas.
-    * **DEBE** incluir la sección `<bpmndi:BPMNDiagram>` con un `<bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1">` (referenciando el ID del PROCESO).
-    * **DEBE** incluir dentro del `<bpmndi:BPMNPlane>`, las etiquetas `<bpmndi:BPMNShape>` para CADA StartEvent, UserTask y EndEvent, y `<bpmndi:BPMNEdge>` para CADA SequenceFlow. Usa los IDs correctos en el atributo `bpmnElement`. Puedes usar coordenadas y tamaños FIJOS/PLACEHOLDER (ver ejemplo abajo), no necesitas calcularlos.
-    * Asegúrate de que TODO el XML sea perfectamente formado y todas las etiquetas estén cerradas correctamente.
-    * Ejemplo MÍNIMO de la estructura DI requerida dentro de BPMNPlane (usa IDs y coordenadas similares):
-        ```xml
-        <bpmndi:BPMNPlane id="Plane_1" bpmnElement="GeneratedProcess_1">
-          <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
-            <dc:Bounds x="100" y="100" width="36" height="36" />
-          </bpmndi:BPMNShape>
-          <bpmndi:BPMNShape id="Task_1_di" bpmnElement="Task_1"> <dc:Bounds x="200" y="80" width="100" height="80" />
-          </bpmndi:BPMNShape>
-          <bpmndi:BPMNEdge id="Flow_0_di" bpmnElement="Flow_0"> <di:waypoint x="136" y="118" /> <di:waypoint x="200" y="118" /> </bpmndi:BPMNEdge>
-          <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
-            <dc:Bounds x="500" y="100" width="36" height="36" />
-          </bpmndi:BPMNShape>
-        </bpmndi:BPMNPlane>
-        ```
 * **`section_3_3_detailed_steps`**: Lista de objetos por paso:
     * `step_number`: Secuencial (1, 2, 3...).
     * `description`: **REFINADO:** Resumen conciso y **orientado a la acción** (Prioriza verbo claro: "Abrir X", "Hacer clic Y", "Ingresar Z").
@@ -250,7 +223,7 @@ def analyze_video_steps(api_key: str, model_name: str, video_path: str):
 * **`section_6_2_dependencies_suggestion`**: Intenta listar dependencias obvias (ej: "Acceso a internet", "Aplicación X instalada"). *Especulativo.*
 * **`section_6_4_reporting_suggestion`**: Sugiere logs básicos (ej: "Registrar inicio/fin", "Registrar error"). *Especulativo.*
 
-**¡IMPORTANTE!** Prioriza la validez del JSON y la precisión/detalle de `section_3_3_detailed_steps`. **La precisión en las interacciones con hojas de cálculo es CRÍTICA.** La calidad del texto narrativo generado es secundaria y requerirá revisión humana intensiva. El BPMN debe ser estructuralmente correcto y simple.
+**¡IMPORTANTE!** Prioriza la validez del JSON y la precisión/detalle de `section_3_3_detailed_steps`. **La precisión en las interacciones con hojas de cálculo es CRÍTICA.** La calidad del texto narrativo generado es secundaria y requerirá revisión humana intensiva.
 """
     # Configuración de generación
     generation_config = genai.GenerationConfig(

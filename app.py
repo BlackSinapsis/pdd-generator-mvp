@@ -152,11 +152,10 @@ if st.session_state.pipeline_result:
         # Extraer rutas de los archivos generados
         result_data = st.session_state.pipeline_result
         docx_path = result_data.get('docx_path')
-        bpmn_path = result_data.get('bpmn_path')
         json_path = result_data.get('json_path') # Opcional
 
         # Crear columnas para los botones de descarga
-        col_btn1, col_btn2, col_btn3 = st.columns(3)
+        col_btn1, col_btn2 = st.columns(2)
 
         # Botón Descargar DOCX
         if docx_path and os.path.exists(docx_path):
@@ -177,30 +176,11 @@ if st.session_state.pipeline_result:
              with col_btn1:
                 st.warning("Archivo DOCX no encontrado.")
 
-        # Botón Descargar BPMN
-        if bpmn_path and os.path.exists(bpmn_path):
-            try:
-                with open(bpmn_path, "rb") as fp_bpmn:
-                     with col_btn2: # Poner en la segunda columna
-                        st.download_button(
-                            label="🌊 Descargar BPMN (.bpmn)",
-                            data=fp_bpmn,
-                            file_name=os.path.basename(bpmn_path),
-                            mime="application/xml",
-                            use_container_width=True
-                        )
-            except Exception as e:
-                 with col_btn2:
-                    st.error(f"Error al leer BPMN: {e}")
-        else:
-            with col_btn2:
-                st.warning("Archivo BPMN no encontrado.")
-
         # Botón Descargar JSON (Opcional)
         if json_path and os.path.exists(json_path):
             try:
                 with open(json_path, "rb") as fp_json:
-                     with col_btn3: # Poner en la tercera columna
+                     with col_btn2: # Poner en la segunda columna
                         st.download_button(
                             label="⚙️ Descargar JSON (.json)",
                             data=fp_json,
@@ -209,10 +189,10 @@ if st.session_state.pipeline_result:
                             use_container_width=True
                         )
             except Exception as e:
-                 with col_btn3:
+                 with col_btn2:
                     st.error(f"Error al leer JSON: {e}")
         else:
-            with col_btn3:
+            with col_btn2:
                 st.warning("Archivo JSON no encontrado.")
 
 
