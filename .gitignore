@@ -26,7 +26,12 @@ screenshots_output/
 # pasos_ia_ejemplo.json  <-- Puedes decidir si versionar el ejemplo o no
 
 # Archivos de configuración local (si usaras .env en el futuro)
-.env*
+.env
+.env.local
+.env.development
+.env.production
+# Pero permitir archivos de ejemplo
+!.env.example
 
 # Archivos del sistema operativo
 .DS_Store

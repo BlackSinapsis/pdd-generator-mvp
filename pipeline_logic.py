@@ -21,9 +21,18 @@ except ImportError as e:
     sys.exit(1)
 
 # --- Configuración Centralizada ---
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") # API KEY DE GEMINI desde .env
-MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro") # Modelo desde .env
-PROMPT_LANGUAGE = os.getenv("PROMPT_LANGUAGE", "es") # Idioma del prompt desde .env
+# Soporta tanto variables de entorno (.env) como Streamlit secrets (Community Cloud)
+try:
+    import streamlit as st
+    # Si estamos en Streamlit Cloud, usar secrets
+    GEMINI_API_KEY = st.secrets.get("GOOGLE_AI_API_KEY", st.secrets.get("GEMINI_API_KEY"))
+    MODEL_NAME = st.secrets.get("MODEL_NAME", "gemini-2.5-pro")
+    PROMPT_LANGUAGE = st.secrets.get("LANGUAGE", st.secrets.get("PROMPT_LANGUAGE", "es"))
+except (ImportError, AttributeError):
+    # Fallback a variables de entorno para uso local
+    GEMINI_API_KEY = os.getenv("GOOGLE_AI_API_KEY", os.getenv("GEMINI_API_KEY"))
+    MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-pro")
+    PROMPT_LANGUAGE = os.getenv("LANGUAGE", os.getenv("PROMPT_LANGUAGE", "es"))
 
 # Nombres de Archivos Intermedios/Salida
 JSON_OUTPUT_PATH = 'full_analysis_output.json'
