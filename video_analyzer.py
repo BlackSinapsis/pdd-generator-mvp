@@ -348,6 +348,15 @@ def analyze_video_steps(api_key: str, model_name: str, video_path: str):
     try:
         parsed_data = json.loads(cleaned_json_text)
         print("¡JSON parseado exitosamente!")
+        
+        # Guardar el resultado al archivo JSON
+        try:
+            with open(OUTPUT_JSON_PATH, 'w', encoding='utf-8') as f:
+                json.dump(parsed_data, f, indent=2, ensure_ascii=False)
+            print(f"Resultado guardado en: {OUTPUT_JSON_PATH}")
+        except Exception as e:
+            print(f"Advertencia: Error al guardar el archivo JSON '{OUTPUT_JSON_PATH}': {e}")
+        
         return parsed_data, None # Devuelve datos y ningún error
     except json.JSONDecodeError as json_err:
         error_msg = f"Fallo al parsear JSON: {json_err}. Línea: {json_err.lineno}, Col: {json_err.colno}"
@@ -372,14 +381,7 @@ if __name__ == "__main__":
     if extracted_steps:
         print("\n--- Pasos Extraídos (Estructura Python) ---")
         print(json.dumps(extracted_steps, indent=2, ensure_ascii=False))
-
-        # Guardar el resultado directo de la API
-        try:
-            with open(OUTPUT_JSON_PATH, 'w', encoding='utf-8') as f:
-                json.dump(extracted_steps, f, indent=2, ensure_ascii=False)
-            print(f"\nResultado COMPLETO guardado en: {OUTPUT_JSON_PATH}")
-        except Exception as e:
-            print(f"\nAdvertencia: Error al guardar el archivo JSON de salida directa '{OUTPUT_JSON_PATH}': {e}")
+        print(f"\nProceso completado exitosamente. JSON guardado en: {OUTPUT_JSON_PATH}")
     else:
         print(f"\n--- Fase 1 Fallida ---")
         print(f"Error principal: {error}")
